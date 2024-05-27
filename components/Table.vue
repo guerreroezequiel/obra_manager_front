@@ -13,7 +13,7 @@
                   class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">
                   Age</th>
                 <th scope="col"
-                  class="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">
+                  class="px-6 py-3  text-start text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">
                   Address</th>
                 <th scope="col"
                   class="px-6 py-3 text-end text-xs font-medium text-gray-500 uppercase dark:text-neutral-500">
