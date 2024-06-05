@@ -1,5 +1,5 @@
 <template>
-    <form class="flex flex-col w-1/3 bg-slate-300 p-5 m-5 rounded-md justify-center" @submit.prevent="submitForm">
+    <form class="flex flex-col w-full bg-slate-300 p-5 rounded-md justify-center" @submit.prevent="submitForm">
         <div class="flex flex-col " v-for="field in obraModelSchema" :key="field.Field">
             <label class="flex p-2 w-1/3" :for="field.Field">{{ field.Field }}></label>
             <input class="flex m-2 p-1 right-0 rounded-md" :id="field.Field" v-model="formData[field.Field]"
@@ -13,12 +13,19 @@
 import { ref, onMounted } from 'vue';
 
 export default {
-    setup() {
+    props: {
+        table: {
+            type: String,
+            default: 'obras' // Valor por defecto para la prop 'url'
+        }
+    },
+
+    setup(props) {
         let obraModelSchema = ref([]);
         let formData = ref({});
 
         onMounted(async () => {
-            const response = await fetch('http://localhost:3333/models/obra');
+            const response = await fetch('http://localhost:3333/models/' + props.table);
             if (response.ok) {
                 const data = await response.json();
                 obraModelSchema.value = data.obraModelSchema;

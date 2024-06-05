@@ -1,37 +1,43 @@
 <template>
-    <div class="flex flex-col h-screen pt-10 bg-orange-100 duration-300">
-
-        <div class="flex flex-col my-3 p-5" v-if="consulta">
+    <div class="flex flex-col h-screen pt-10 p-5 bg-stone-500 rounded-lg">
+        <h1 class="font-mono ">{{ table }}</h1>
+        <div class="flex flex-col my-3 py-5" v-if="consulta">
             <input
                 class="rounded-md p-2 w-80 bg-gray-200 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
                 type="text" placeholder="Buscar" />
         </div>
-        <div class="mx-5 flex" v-if="consulta" :class="{ 'visible delay-150': open, 'invisible duration-150': !open }">
-            <div class="overflow-x-auto w-full">
-                <table class="table-auto">
-                    <thead>
+        <div class="flex" v-if="consulta" :class="{ 'visible delay-150': open, 'invisible duration-150': !open }">
+            <div class="rounded-lg overflow-hidden overflow-x-auto w-full">
+                <table class="table-auto ">
+                    <thead class="">
                         <tr>
-                            <th v-for=" (value, key) in consulta[0]" :key="key" class="px-4 py-2">{{ key }}</th>
+                            <th v-for=" (value, key) in consulta[0]" :key="key" class="p-2 bg-slate-300 ">{{ key
+                                }}</th>
                         </tr>
                     </thead>
-                    <tbody :class="{ ' border-green-500': isEditing }">
+                    <tbody class="p-3" :class="{ ' border-green-500': isEditing }">
                         <tr v-for="(item, index) in consulta" :key="index">
-                            <td v-for="(value, key) in item" :key="key" class="border-spacing-0 outline-2 "
+                            <td v-for="(value, key) in item" :key="key" class=" "
                                 :class="{ 'border-cyan-600': isEditing && isFieldEditable(key), 'bg-slate-100': isFieldEditable(key), 'bg-slate-300': !isFieldEditable(key) }">
                                 <input v-model="item[key]" :readonly="!isEditing || !isFieldEditable(key)"
-                                    class="bg-transparent focus:outline-none focus:border-blue-500 border px-4 py-2 rounded-sm">
+                                    class="bg-transparent focus:outline-none focus:border-blue-500 border px-4 py-2 rounded-md">
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
-        <button class="mt-7 bg-cyan-600 w-20 h-7" @click="toggleEdit()">
-            {{ isEditing ? 'Cancelar' : 'Editar' }}
-        </button>
-        <button class="mt-7 bg-cyan-600 w-20 h-7" @click="saveChanges()">
-            Guardar
-        </button>
+        <div class="flex justify-end right-0 mt-3">
+            <button class=" w-20 h-7 m-1 rounded-md " :class="{ 'bg-red-300': isEditing, 'bg-blue-300': !isEditing }"
+                @click=" toggleEdit()">
+                {{ isEditing ? 'Cancelar' : 'Editar' }}
+            </button>
+            <button class="w-20 h-7 m-1 rounded-md" :class="{ 'bg-green-300': isEditing, 'bg-gray-300': !isEditing }"
+                @click="saveChanges()" :disabled="!isEditing">
+                Guardar
+            </button>
+        </div>
+
     </div>
 </template>
 
@@ -40,9 +46,9 @@ import { ref, onMounted } from 'vue';
 
 export default {
     props: {
-        url: {
+        table: {
             type: String,
-            default: 'http://localhost:3333/articulos' // Valor por defecto para la prop 'url'
+            default: 'articulos' // Valor por defecto para la prop 'url'
         }
     },
     setup(props) {
@@ -55,7 +61,7 @@ export default {
         let originalConsulta = ref(null);  // Nuevo estado
 
         onMounted(async () => {
-            const response = await fetch(props.url);
+            const response = await fetch('http://localhost:3333/' + props.table);
             if (response.ok) {
                 const data = await response.json();
                 consulta.value = data;
@@ -63,7 +69,7 @@ export default {
                 console.error('HTTP-Error: ' + response.status);
             }
 
-            const modelResponse = await fetch('http://localhost:3333/models/articulo');
+            const modelResponse = await fetch('http://localhost:3333/models/' + props.table);
             if (modelResponse.ok) {
                 const jsonResponse = await modelResponse.json();
                 modelSchema.value = jsonResponse.articulosModelSchema;
