@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col my-5 p-5 bg-stone-500 rounded-lg">
+    <div class="flex flex-col h-screen pt-10 p-5 bg-stone-500 rounded-lg">
         <h1 class="font-mono ">{{ table }}</h1>
         <div class="flex flex-col my-3 py-5" v-if="consulta">
             <input
@@ -41,23 +41,19 @@
     </div>
 </template>
 
-<script>
+<script lang="ts">
 import { ref, onMounted } from 'vue';
 
 export default {
     props: {
         table: {
             type: String,
-            default: 'articulos' // Valor por defecto para la prop 'url'
-        },
-        rutaGet: {
-            type: String,
-            default: 'articulos'
+            default: 'obras' // Valor por defecto para la prop 'url'
         },
 
     },
     setup(props) {
-        let consulta = ref(null);
+        let consulta = ref(null) | props.consulta;
         let open = ref(true);
         let modelSchema = ref(null);
         let editableFields = ref({});  // Nuevo estado
@@ -66,18 +62,12 @@ export default {
         let originalConsulta = ref(null);  // Nuevo estado
 
         onMounted(async () => {
-            console.log('ruta: ', props.rutaGet);
-            const response = await fetch(props.rutaGet);
+            const response = await fetch('http://localhost:3333/' + props.table);
             if (response.ok) {
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.includes("application/json")) {
-                    const data = await response.json();
-                    consulta.value = data;
-                } else {
-                    console.error('HTTP-Error desde GRILLA: La respuesta no es un JSON válido');
-                }
+                const data = await response.json();
+                consulta.value = data;
             } else {
-                console.error('HTTP-Error desde GRILLA: ' + response.status);
+                console.error('HTTP-Error: ' + response.status);
             }
 
             const modelResponse = await fetch('http://localhost:3333/models/' + props.table);

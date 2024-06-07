@@ -1,19 +1,24 @@
 <template>
   <div :class="{ 'w-80 ease-out ': open, 'w-0 ease-in': !open }"
-    class="flex flex-col sticky top-0 left-0 h-screen pt-10 bg-zinc-300 text-stone-700 duration-300">
+    class="flex flex-col sticky top-0 left-0 h-screen pt-10 bg-neutral-50 justify-center text-stone-700 duration-300 border-r-2 border-r-neutral-400">
 
-    <button :class="{ 'ease-out': open, 'ease-in opacity-80': !open }" @click="open = !open"
-      class="absolute -right-8 p-1 bg-zinc-300 border-r-2 border-b-2 border-stone-600 text-black top-20  rounded-r-xl transition-all duration-300 items-center hover:opacity-100 hover:text-white">
+    <button :class="{ 'ease-out': open, 'ease-in': !open }" @click="open = !open"
+      class="absolute -right-9 p-1 bg-neutral-50 border-r-2 border-b-2 border-neutral-400 text-black top-24  rounded-r-xl transition-all items-center active:scale-95 duration-100">
+
       <Icon v-if="open" name="mdi:folder-open-outline" class="h-12 hover:cursor-pointer " size="25">
       </Icon>
       <Icon v-else name="mdi:folder-search-outline" class="h-12 hover:cursor-pointer " size="25"></Icon>
     </button>
-
-    <div class="flex flex-col my-10 p-2" v-if="obra"
+    <div class="flex flex-col mt-12 items-center p-4 " v-if="obra"
       :class="{ 'visible delay-150': open, 'invisible duration-150': !open }">
-      <input class="rounded-md p-2 w-5/6 bg-gray-200 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
-        type="text" placeholder="Buscar" />
-      <button>O</button>
+      <div class="flex flex-row min-h-10 w-full justify-between ring-1 focus:ring-blue-500 rounded-md">
+        <input class="p-1 rounded-l-md w-5/6 bg-gray-200 focus:outline-none text-black " type="text"
+          placeholder="Buscar" />
+        <button class="flex w-1/6 bg-slate-400 rounded-r-md items-center justify-center active:scale-95">
+          <Icon name="simple-line-icons:magnifier" class=""></Icon>
+        </button>
+      </div>
+
       <div class="flex flex-col ml-5 p-2 ">
         <button>Favorito 1</button>
         <button>Favorito 2</button>
