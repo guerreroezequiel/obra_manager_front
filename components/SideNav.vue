@@ -31,14 +31,14 @@
           <li class="p-4">
             <a href="#" class=" p-4">{{ obra.obra.nombre }}</a>
             <ul>
-              <li class=" p-4" v-for="etapa in obra.obra.etapas" :key="etapa.id">
+              <li class=" p-4 border" v-for="etapa in obra.obra.etapas" :key="etapa.id">
                 <a href="#" class=" p-4">{{ etapa.nombre }}</a>
                 <ul>
-                  <li class=" p-4" v-for="modulo in etapa.modulos" :key="modulo.id">
+                  <li class=" p-4 border" v-for="modulo in etapa.modulos" :key="modulo.id">
                     <a href="#" class=" p-4">{{ modulo.nombre }}</a>
                     <ul>
                       <li class=" p-4" v-for="tarea in modulo.tareas" :key="tarea.id">
-                        <a href="#" class=" p-4">{{ tarea.nombre }}</a>
+                        <a href="#" class=" p-4 border">{{ tarea.nombre }}</a>
                       </li>
                     </ul>
                   </li>
@@ -73,7 +73,7 @@ export default {
     let open = ref(true);
 
     onMounted(async () => {
-      const response = await fetch(`http://localhost:3333/${props.table}/${props.id}/details`);
+      const response = await fetch(`http://localhost:3333/${props.table}/${props.id}/relations`);
       // console.log(props.table, props.id)
       if (response.ok) {
         obra.value = await response.json();

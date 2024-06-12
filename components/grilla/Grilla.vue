@@ -1,13 +1,15 @@
 <template>
-    <div class="flex flex-col my-5 p-5 bg-stone-500 rounded-lg">
-        <h1 class="font-mono ">{{ table }}</h1>
-        <div class="flex flex-col my-3 py-5" v-if="consulta">
+    <div class="flex flex-col p-2 rounded-lg">
+        <!-- <h1 class="font-mono ">{{ tableProp }}</h1> -->
+        <!--    <div class="flex flex-col my-3 py-5" v-if="consulta">
             <input
                 class="rounded-md p-2 w-80 bg-gray-200 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
                 type="text" placeholder="Buscar" />
-        </div>
-        <div class="flex" v-if="consulta" :class="{ 'visible delay-150': open, 'invisible duration-150': !open }">
-            <div class="rounded-lg overflow-hidden overflow-x-auto w-full">
+        </div> -->
+        <div class="flex flex-col" v-if="consulta"
+            :class="{ 'visible delay-150': open, 'invisible duration-150': !open }">
+
+            <div class="rounded-lg overflow-hidden overflow-x-auto w-full shadow-md border border-slate-600">
                 <table class="table-auto ">
                     <thead class="">
                         <tr>
@@ -15,61 +17,72 @@
                                 }}</th>
                         </tr>
                     </thead>
-                    <tbody class="p-3" :class="{ ' border-green-500': isEditing }">
+                    <tbody v-if="editableFields" class="p-3" :class="{ ' border-green-500': isEditing }">
                         <tr v-for="(item, index) in consulta" :key="index">
-                            <td v-for="(value, key) in item" :key="key" class=" "
-                                :class="{ 'border-cyan-600': isEditing && isFieldEditable(key), 'bg-slate-100': isFieldEditable(key), 'bg-slate-300': !isFieldEditable(key) }">
-                                <input v-model="item[key]" :readonly="!isEditing || !isFieldEditable(key)"
-                                    class="bg-transparent focus:outline-none focus:border-blue-500 border px-4 py-2 rounded-md">
+                            <td v-for="(value, key) in item" :key="key">
+                                <input :readonly="!isFieldEditable(key) || !isEditing" v-model="item[key]"
+                                    :class="{ ' bg-gray-300': !isFieldEditable(key) && isEditing }"
+                                    class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md">
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
-        <div class="flex justify-end right-0 mt-3">
-            <button class=" w-20 h-7 m-1 rounded-md " :class="{ 'bg-red-300': isEditing, 'bg-blue-300': !isEditing }"
-                @click=" toggleEdit()">
-                {{ isEditing ? 'Cancelar' : 'Editar' }}
+        <div class="flex justify-end mt-3">
+            <button class="items-center w-20 h-7 m-1 rounded-md text-white"
+                :class="{ 'bg-orange-400': isEditing, 'bg-sky-400': !isEditing }" @click=" toggleEdit()">
+                <p>{{ isEditing ? 'Cancelar' : 'Editar' }}</p>
             </button>
-            <button class="w-20 h-7 m-1 rounded-md" :class="{ 'bg-green-300': isEditing, 'bg-gray-300': !isEditing }"
-                @click="saveChanges()" :disabled="!isEditing">
-                Guardar
+            <button class="w-20 h-7 m-1 rounded-md"
+                :class="{ 'bg-emerald-400 text-white': isEditing, 'bg-gray-400': !isEditing }" @click="saveChanges()"
+                :disabled="!isEditing">
+                <p>Guardar</p>
             </button>
         </div>
 
     </div>
 </template>
 
-<script>
+<script lang="ts">
 import { ref, onMounted } from 'vue';
 
 export default {
     props: {
-        table: {
-            type: String,
-            default: 'articulos' // Valor por defecto para la prop 'url'
-        },
         rutaGet: {
             type: String,
             default: 'articulos'
         },
-
     },
+
+    methods: {
+        isFieldEditable(fieldName) {
+            return this.editableFields[fieldName];
+        },
+    },
+
     setup(props) {
         let consulta = ref(null);
         let open = ref(true);
-        let modelSchema = ref(null);
-        let editableFields = ref({});  // Nuevo estado
+        let editableFields = ref(null | []);
         let isEditing = ref(false);  // Nuevo estado
         let changedItems = ref({});
         let originalConsulta = ref(null);  // Nuevo estado
+        let tableProp = ref('');  // Make tableProp a ref
 
         onMounted(async () => {
             console.log('ruta: ', props.rutaGet);
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
+                let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
+                const camposResponse = await fetch(`http://localhost:3333/editables/${tableProp}`);  // campos editables
+                if (camposResponse.ok) {
+                    const campos = await camposResponse.json();
+                    editableFields.value = campos;
+                } else {
+                    console.error('HTTP-Error desde GRILLA: ' + camposResponse.status);
+                }
                 if (contentType && contentType.includes("application/json")) {
                     const data = await response.json();
                     consulta.value = data;
@@ -80,25 +93,8 @@ export default {
                 console.error('HTTP-Error desde GRILLA: ' + response.status);
             }
 
-            const modelResponse = await fetch('http://localhost:3333/models/' + props.table);
-            if (modelResponse.ok) {
-                const jsonResponse = await modelResponse.json();
-                modelSchema.value = jsonResponse.articulosModelSchema;
-
-                // Inicializar editableFields
-                jsonResponse.articulosModelSchema.forEach(field => {
-                    editableFields.value[field.Field] = false;
-                });
-            } else {
-                console.error('HTTP-Error: ' + modelResponse.status);
-            }
         });
 
-        // chequea editables
-        const isFieldEditable = (key) => {
-            const result = modelSchema.value?.find(field => field.Field === key)?.editable;
-            return Boolean(result);
-        };
 
         const toggleEdit = () => {
             if (!isEditing.value) {
@@ -122,7 +118,7 @@ export default {
 
             for (let id in changedItems.value) {
                 const item = changedItems.value[id];
-                const response = await fetch(`http://localhost:3333/articulos/${id}`, {
+                const response = await fetch(`http://localhost:3333/${tableProp}/${id}`, {
                     method: 'PUT', // Aquí es donde especificas el método PUT
                     headers: {
                         'Content-Type': 'application/json'
@@ -146,8 +142,8 @@ export default {
             editableFields,
             toggleEdit,
             isEditing,
-            isFieldEditable,
-            saveChanges
+            saveChanges,
+            tableProp  // Return tableProp
         };
     }
 };

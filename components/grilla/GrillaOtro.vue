@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col h-screen pt-10 p-5 bg-stone-500 rounded-lg">
+    <div class="flex flex-col my-5 p-5 bg-stone-500 rounded-lg">
         <h1 class="font-mono ">{{ table }}</h1>
         <div class="flex flex-col my-3 py-5" v-if="consulta">
             <input
@@ -21,6 +21,7 @@
                                 :class="{ 'border-cyan-600': isEditing && isFieldEditable(key), 'bg-slate-100': isFieldEditable(key), 'bg-slate-300': !isFieldEditable(key) }">
                                 <input v-model="item[key]" :readonly="!isEditing || !isFieldEditable(key)"
                                     class="bg-transparent focus:outline-none focus:border-blue-500 border px-4 py-2 rounded-md">
+                                <slot />
                             </td>
                         </tr>
                     </tbody>
@@ -41,19 +42,23 @@
     </div>
 </template>
 
-<script lang="ts">
+<script lag="ts">
 import { ref, onMounted } from 'vue';
 
 export default {
     props: {
         table: {
             type: String,
-            default: 'obras' // Valor por defecto para la prop 'url'
+            default: 'articulos' // Valor por defecto para la prop 'url'
+        },
+        rutaGet: {
+            type: String,
+            default: 'articulos'
         },
 
     },
     setup(props) {
-        let consulta = ref(null) | props.consulta;
+        let consulta = ref(null);
         let open = ref(true);
         let modelSchema = ref(null);
         let editableFields = ref({});  // Nuevo estado
@@ -62,12 +67,18 @@ export default {
         let originalConsulta = ref(null);  // Nuevo estado
 
         onMounted(async () => {
-            const response = await fetch('http://localhost:3333/' + props.table);
+            console.log('ruta: ', props.rutaGet);
+            const response = await fetch(props.rutaGet);
             if (response.ok) {
-                const data = await response.json();
-                consulta.value = data;
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    const data = await response.json();
+                    consulta.value = data;
+                } else {
+                    console.error('HTTP-Error desde GRILLA: La respuesta no es un JSON válido');
+                }
             } else {
-                console.error('HTTP-Error: ' + response.status);
+                console.error('HTTP-Error desde GRILLA: ' + response.status);
             }
 
             const modelResponse = await fetch('http://localhost:3333/models/' + props.table);
