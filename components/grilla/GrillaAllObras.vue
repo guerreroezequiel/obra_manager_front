@@ -71,17 +71,21 @@ export default {
         let originalConsulta = ref([]);  // Nuevo estado
         let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
 
-
         onMounted(async () => {
             console.log('ruta: ', props.rutaGet);
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                // let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
                 const camposResponse = await fetch(`http://localhost:3333/editables/${tableProp}`);  // campos editables
                 if (camposResponse.ok) {
-                    const campos = await camposResponse.json();
-                    editableFields.value = campos;
+                    const camposContentType = camposResponse.headers.get("content-type");
+                    if (camposContentType && camposContentType.includes("application/json")) {
+                        const campos = await camposResponse.json();
+                        editableFields.value = campos;
+                        console.log(camposContentType);
+                    } else {
+                        console.error('HTTP-Error desde GRILLA: La respuesta no es un JSON válido');
+                    }
                 } else {
                     console.error('HTTP-Error desde GRILLA: ' + camposResponse.status);
                 }
@@ -89,12 +93,11 @@ export default {
                     const data = await response.json();
                     consulta.value = data;
                 } else {
-                    console.error('HTTP-Error desde GRILLA: La respuesta no es un JSON válido');
+                    console.error('HTTP-Error desde GRILLA ALL OBRAS: La respuesta no es un JSON válido' + response.status);
                 }
             } else {
                 console.error('HTTP-Error desde GRILLA: ' + response.status);
             }
-
         });
 
 

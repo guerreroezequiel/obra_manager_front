@@ -9,8 +9,8 @@
         <div class="flex flex-col" v-if="consulta"
             :class="{ 'visible delay-150': open, 'invisible duration-150': !open }">
 
-            <div :class="{ 'border-sky-500': isEditing, 'border-slate-400': !isEditing }"
-                class="rounded-lg overflow-hidden overflow-x-auto w-full shadow-md border-2">
+            <div :class="{ 'bg-slate-200': isEditing, 'border-slate-400': !isEditing }"
+                class="rounded-lg overflow-hidden overflow-x-auto w-full shadow-md border-2 border-slate-400">
                 <table class="table-auto ">
                     <thead class="">
                         <tr>
@@ -18,9 +18,11 @@
                                 }}</th>
                         </tr>
                     </thead>
-                    <tbody v-if="editableFields" class="p-3" :class="{ ' border-green-500': isEditing }">
-                        <tr v-for="(item, index) in consulta" :key="index">
-                            <td v-for="(value, key) in item" :key="key">
+                    <tbody v-if="editableFields" class="p-2" :class="{ ' border-green-500': isEditing }">
+                        <tr v-for="(item, index) in consulta" :key="index" @click="selectedRow = index"
+                            class="p-2 m-1 border-b"
+                            :class="{ ' border-slate-400': selectedRow === index && isEditing, 'border-transparent': !isEditing }">
+                            <td v-for="(value, key) in item" :key="key" class="p-1">
                                 <input :readonly="!isFieldEditable(key) || !isEditing" v-model="item[key]"
                                     :class="{ ' bg-gray-300': !isFieldEditable(key) && isEditing }"
                                     class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md">
@@ -30,31 +32,65 @@
                 </table>
             </div>
         </div>
-        <div class="flex justify-end mt-3">
-            <button class="items-center w-20 h-7 m-1 rounded-md text-white"
-                :class="{ 'bg-red-400': isEditing, 'bg-sky-400': !isEditing }" @click=" toggleEdit()">
-                <p>{{ isEditing ? 'Cancelar' : 'Editar' }}</p>
-            </button>
-            <button class="w-20 h-7 m-1 rounded-md"
-                :class="{ 'bg-sky-400 text-white': isEditing, 'bg-gray-400': !isEditing }" @click="saveChanges()"
-                :disabled="!isEditing">
-                <p>Guardar</p>
-            </button>
+        <div class="flex justify-between mt-3 my-1">
+            <p class="text-lg font-bold">Total: ${{ totalPrecioTotal }}</p>
+
+            <div>
+                <button class="items-center w-20 h-7  rounded-md text-white"
+                    :class="{ 'bg-red-400': isEditing, 'bg-sky-400': !isEditing }" @click="toggleEdit()">
+                    <p>{{ isEditing ? 'Cancelar' : 'Editar' }}</p>
+                </button>
+                <button class="w-20 h-7 m-1 rounded-md"
+                    :class="{ 'bg-sky-400 text-white': isEditing, 'bg-gray-400': !isEditing }" @click="saveChanges()"
+                    :disabled="!isEditing">
+                    <p>Guardar</p>
+                </button>
+
+            </div>
+
+
         </div>
 
     </div>
 </template>
 
 <script lang="ts">
-import { ref, onMounted } from 'vue';
+
+interface ArtTarea {
+    id: number;
+    articuloId: number;
+    articuloNombre: string | null;
+    uniMedId: number | null;
+    descripcion: string | null;
+    heredaMed: boolean;
+    cantidad: number;
+    cantidadTotal: number;
+    precioUnitario: number;
+    precioTotal: number;
+    tareaId: number;
+}
+
+import { ref, onMounted, watch } from 'vue';
 
 export default {
+    data() {
+        return {
+            selectedRow: null as number | null,
+            // ...
+        }
+    },
+
     props: {
         rutaGet: {
             type: String,
             required: true,
         },
+        medida: {
+            type: Number,
+            required: true,
+        },
     },
+
 
     methods: {
         isFieldEditable(fieldName: any) {
@@ -62,14 +98,61 @@ export default {
         },
     },
 
-    setup(props) {
-        let consulta = ref([]);
+    setup(props, { emit }) {
+        let consulta = ref<ArtTarea[]>([]);
         let open = ref(true);
         let editableFields = ref([]);
         let isEditing = ref(false);  // Nuevo estado
         let changedItems = ref<{ [key: string]: any }>({});
         let originalConsulta = ref([]);  // Nuevo estado
         let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
+
+        const recalculateTotal = (index: number) => {
+            consulta.value[index].precioTotal = consulta.value[index].cantidad * consulta.value[index].precioUnitario;
+        };
+
+        const recalculateCantidadTotal = (index: number) => {
+            consulta.value[index].cantidadTotal = consulta.value[index].cantidad * props.medida;
+        };
+
+        const totalPrecioTotal = computed(() => {
+            return consulta.value.reduce((total, item) => total + (+item.precioTotal || 0), 0);
+        });
+
+        watch(totalPrecioTotal, (newTotalTotal) => {
+            console.log('newtotal: ' + newTotalTotal);
+            emit('update-total', newTotalTotal);
+        });
+
+
+        watch(consulta, (newValue, oldValue) => {
+            newValue.forEach((item, index) => {
+                watch([
+                    () => consulta.value[index].cantidad,
+                    () => consulta.value[index].precioUnitario],
+                    () => recalculateTotal(index));
+
+                watch(() => consulta.value[index].cantidad, (newCantidad) => {
+                    if (consulta.value[index].heredaMed == true) {
+                        recalculateCantidadTotal(index);
+                    }
+                });
+
+                watch(() => consulta.value[index].heredaMed, (newHeredaMed) => {
+                    if (newHeredaMed == true) {
+                        recalculateCantidadTotal(index);
+                        consulta.value[index].precioTotal = consulta.value[index].cantidadTotal * consulta.value[index].precioUnitario;
+                    } else {
+                        consulta.value[index].cantidadTotal = 0;
+                        consulta.value[index].precioTotal = consulta.value[index].cantidad * consulta.value[index].precioUnitario;
+                    }
+                });
+
+
+            });
+
+
+        }, { deep: true });
 
 
         onMounted(async () => {
@@ -103,6 +186,8 @@ export default {
                 originalConsulta.value = JSON.parse(JSON.stringify(consulta.value));
             }
             isEditing.value = !isEditing.value;
+
+            console.log(props.medida);
         };
 
         const saveChanges = async () => {
@@ -137,6 +222,21 @@ export default {
                 }
             }
 
+            // Aquí es donde guardas totalPrecioTotal
+            const responseTotal = await fetch(`http://localhost:3333/tareas/${consulta.value[0].tareaId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ precioTotal: totalPrecioTotal.value })
+            });
+            console.log('ruta preciioTotal: ', responseTotal.url);
+
+            if (!responseTotal.ok) {
+                console.error('Error al guardar totalPrecio en  la tareas: ', responseTotal.url);
+            }
+            console.log({ precioTotal: totalPrecioTotal })
+            console.log(` ruta para totalPrecioTotal http://localhost:3333/tareas/${consulta.value[0].tareaId}`)
             changedItems.value = {};
             originalConsulta.value = [];  // Limpiar la copia original de consulta
             toggleEdit();
@@ -149,7 +249,10 @@ export default {
             toggleEdit,
             isEditing,
             saveChanges,
-            tableProp  // Return tableProp
+            tableProp,
+            recalculateTotal,
+            recalculateCantidadTotal,
+            totalPrecioTotal
         };
     }
 };
