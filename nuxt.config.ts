@@ -3,4 +3,5 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   pages: true,
   modules: ['@nuxtjs/tailwindcss', 'nuxt-icon'],
+  // agregar proxy para evitar CORS
 })

@@ -3,12 +3,25 @@
     class="flex flex-col sticky top-0 left-0 h-screen pt-10 bg-neutral-50 justify-center text-stone-700 duration-300 border-r-2 border-r-neutral-400">
 
     <button :class="{ 'ease-out': open, 'ease-in': !open }" @click="open = !open"
-      class="absolute -right-9 p-1 bg-neutral-50 border-r-2 border-b-2 border-neutral-400 text-black top-24  rounded-r-xl transition-all items-center active:scale-95 duration-100">
-
+      class="absolute -right-9 p-1 bg-gray-200 border-r-2 border-b-2 border-neutral-400 text-black top-24  rounded-r-xl transition-all items-center active:scale-95 duration-100">
       <Icon v-if="open" name="mdi:folder-open-outline" class="h-12 hover:cursor-pointer " size="25">
       </Icon>
       <Icon v-else name="mdi:folder-search-outline" class="h-12 hover:cursor-pointer " size="25"></Icon>
     </button>
+
+    <button :class="{ 'ease-out bg-gray-200': !isEditing, 'ease-in bg-red-300': isEditing }"
+      @click="isEditing = !isEditing"
+      class="absolute -right-9 p-1  border-r-2 border-b-2 border-neutral-400 text-black top-40  rounded-r-xl transition-all items-center active:scale-95 duration-100">
+      <Icon v-if="!isEditing" name="simple-line-icons:pencil" class="h-12 hover:cursor-pointer " size="25">
+      </Icon>
+      <Icon v-else name="simple-line-icons:ban" class="h-12 hover:cursor-pointer " size="25"></Icon>
+    </button>
+
+    <button v-show="isEditing" @click="isEditing = !isEditing"
+      class="absolute -right-9 p-1 bg-blue-300 border-r-2 border-b-2 border-neutral-400 text-black top-56  rounded-r-xl transition-all items-center active:scale-95 duration-100">
+      <Icon name="line-md:confirm" class="h-12 hover:cursor-pointer " size="25"></Icon>
+    </button>
+
     <div class="flex flex-col mt-12 items-center p-4 " v-if="obra"
       :class="{ 'visible delay-150': open, 'invisible duration-150': !open }">
       <div class="flex flex-row min-h-10 w-full justify-between ring-1 focus:ring-blue-500 rounded-md">
@@ -70,7 +83,8 @@ export default {
 
   setup(props) {
     let obra = ref(null);
-    let open = ref(true);
+    let open = ref(false);
+    let isEditing = ref(false);
 
     onMounted(async () => {
       const response = await fetch(`http://localhost:3333/${props.table}/${props.id}/relations`);
@@ -85,6 +99,7 @@ export default {
     return {
       obra,
       open,
+      isEditing,
     };
   },
 };

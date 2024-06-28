@@ -14,8 +14,8 @@
                 <table class="table-auto ">
                     <thead class="">
                         <tr>
-                            <th v-for=" (value, key) in consulta[0]" :key="key" class="p-2 bg-slate-300 ">{{ key
-                                }}</th>
+                            <th v-for=" (value, key) in consulta[0]" :key="key" class="p-2 bg-slate-300 ">
+                                {{ key }}</th>
                         </tr>
                     </thead>
                     <tbody v-if="editableFields" class="p-2" :class="{ ' border-green-500': isEditing }">
@@ -156,7 +156,7 @@ export default {
 
 
         onMounted(async () => {
-            console.log('ruta: ', props.rutaGet);
+
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");

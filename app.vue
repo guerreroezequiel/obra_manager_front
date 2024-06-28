@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import LoggedLayout from './layouts/loggedLayout.vue';
+import LoggedLayout from './layouts/LoggedLayout.vue';
 </script>
 
 
 <template>
-  <LoggedLayout v-if="$route.name !== 'index'">
-    <NuxtPage />
-  </LoggedLayout>
+  <div>
+    <LoggedLayout v-if="$route.name !== 'index'">
+      <NuxtPage />
+    </LoggedLayout>
+    <NuxtPage v-else />
+  </div>
 </template>

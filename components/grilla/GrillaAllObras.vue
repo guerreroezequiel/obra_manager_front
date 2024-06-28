@@ -1,11 +1,5 @@
 <template>
     <div class="flex flex-col p-2 rounded-lg">
-        <!-- <h1 class="font-mono ">{{ tableProp }}</h1> -->
-        <!--    <div class="flex flex-col my-3 py-5" v-if="consulta">
-            <input
-                class="rounded-md p-2 w-80 bg-gray-200 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
-                type="text" placeholder="Buscar" />
-        </div> -->
         <div class="flex flex-col" v-if="consulta"
             :class="{ 'visible delay-150': open, 'invisible duration-150': !open }">
 
@@ -14,8 +8,7 @@
                 <table class="table-auto ">
                     <thead class="">
                         <tr>
-                            <th v-for=" (value, key) in consulta[0]" :key="key" class="p-2 bg-slate-300 ">{{ key
-                                }}</th>
+                            <th v-for=" (value, key) in consulta[0]" :key="key" class="p-2 bg-slate-300 ">{{ key }}</th>
                         </tr>
                     </thead>
                     <tbody v-if="editableFields" class="p-3" :class="{ ' border-green-500': isEditing }">
@@ -72,7 +65,7 @@ export default {
         let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
 
         onMounted(async () => {
-            console.log('ruta: ', props.rutaGet);
+
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");

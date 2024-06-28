@@ -73,7 +73,7 @@ export default {
 
 
         onMounted(async () => {
-            console.log('ruta: ', props.rutaGet);
+
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
@@ -114,7 +114,7 @@ export default {
 
                     Object.keys(item).forEach(key => {
                         if (JSON.stringify(item[key]) !== JSON.stringify(originalConsulta.value[index][key])) {
-                            console.log(`ID: ${item.id}, consulta.value: ${JSON.stringify(item[key])}, originalConsulta.value: ${JSON.stringify(originalConsulta.value[index][key])}`);
+                            // console.log(`ID: ${item.id}, consulta.value: ${JSON.stringify(item[key])}, originalConsulta.value: ${JSON.stringify(originalConsulta.value[index][key])}`);
                             changedItems.value[item.id] = item;
                         }
                     });

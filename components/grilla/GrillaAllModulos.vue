@@ -73,7 +73,7 @@ export default {
 
 
         onMounted(async () => {
-            console.log('ruta: ', props.rutaGet);
+
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
