@@ -7,88 +7,56 @@
                 class="rounded-md p-2 w-80 bg-gray-200 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
                 type="text" placeholder="Buscar" />
         </div> -->
-        <div class="flex flex-col" v-if="consulta"
+        <ModalArticuloArtTarea :fkPadre=tareaId :showModal="showModalArticulos"
+            :rutaGet="'http://localhost:3333/lis_pre'" @close.native="showModalArticulos = false"
+            @aceptar="updateRow" />
+        <div class="flex flex-col" v-if="consulta && fieldSettings"
             :class="{ 'visible delay-150': open, 'invisible duration-150': !open }">
 
-            <div :class="{ 'bg-slate-200': isEditing, 'border-slate-400': !isEditing }"
-                class="rounded-lg overflow-hidden overflow-x-auto w-full shadow-md border-2 border-slate-400">
-                <table class="table-auto ">
-                    <thead class="">
-                        <tr>
-                            <th class="p-2 bg-slate-300 ">id</th>
-                            <th class="p-2 bg-slate-300 ">articuloId</th>
-                            <th class="p-2 bg-slate-300 ">articuloNombre</th>
-                            <th class="p-2 bg-slate-300 ">uniMedId</th>
-                            <th class="p-2 bg-slate-300 ">descripcion</th>
-                            <th class="p-2 bg-slate-300 ">heredaMed</th>
-                            <th class="p-2 bg-slate-300 ">cantidad</th>
-                            <th class="p-2 bg-slate-300 ">cantidadTotal</th>
-                            <th class="p-2 bg-slate-300 ">precioUnitario</th>
-                            <th class="p-2 bg-slate-300 ">precioTotal</th>
-                            <th class="p-2 bg-slate-300 ">tareaId</th>
+            <div
+                class=" bg-slate-200 rounded-lg overflow-hidden overflow-x-auto w-full shadow-md border-2 border-slate-400">
+                <table class="table-auto">
+                    <thead>
+                        <tr class="">
+                            <th v-if="isEditing"></th> <!-- Cabecera adicional vacía -->
+                            <th v-for="field in fieldSettings" :key="field.id" class="">
+                                <div class="resizable border-r-2 hover:border-blue-500  my-1 px-0.5"
+                                    :style="{ width: field.width + 'px', minWidth: field.type === 'search' ? '80px' : 'auto' }"
+                                    :data-field-name="field.fieldName">
+                                    <p class="truncate p-1">{{ field.tag }} {{ field.width }}</p>
+                                </div>
+                            </th>
                         </tr>
                     </thead>
-                    <tr v-for="(row, rowIndex) in consulta" :key="rowIndex" @click="selectRow(row)">
-                        <ModalArticuloArtTarea :fkPadre=tareaId :showModal="showModalArticulos"
-                            :rutaGet="'http://localhost:3333/lis_pre'" @close="showModalArticulos = false"
-                            @aceptar="updateRow" />
-                        <td>
-                            <div class="flex">
-                                <button @click="deleteRowVisual(row)" v-show="isEditing"
-                                    class="sticky left-0 text-blue-500 border-0.5 scale-125 px-1 rounded active:bg-gray-300">
+                    <tbody>
+                        <tr v-for="(item, index) in consulta" :key="index" @click="selectRow(item)">
+                            <td v-if="isEditing">
+                                <button @click.stop="deleteRowVisual(item)"
+                                    class="text-blue-500 scale-125 px-1 pb-1.5 bg-transparent active:text-red-500">
                                     <Icon name="material-symbols:delete-outline-rounded" />
                                 </button>
-                                <input :readonly="!isEditing" v-model="row.id"
-                                    class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md ">
-                            </div>
-                        </td>
-                        <td>
-                            <div class="flex">
-                                <input :readonly="!isEditing" v-model="row.articuloId"
-                                    class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md ">
-                                <button @click="selectRow(row), showModalArticulos = true" :disabled="!isEditing"
-                                    class="bg-blue-200 px-2 rounded items-center justify-center">
-                                    <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
-                                </button>
-                            </div>
-                        </td>
-                        <td>
-                            <input :readonly="!isEditing" v-model="row.articuloNombre"
-                                class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md ">
-                        </td>
-                        <td>
-                            <input :readonly="!isEditing" v-model="row.uniMedId"
-                                class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md ">
-                        </td>
-                        <td>
-                            <input :readonly="!isEditing" v-model="row.descripcion"
-                                class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md ">
-                        </td>
-                        <td class="flex items-baseline justify-center">
-                            <input type="checkbox" v-model="row.heredaMed" :disabled="!isEditing"
-                                class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md ">
-                        </td>
-                        <td>
-                            <input :readonly="!isEditing" v-model="row.cantidad"
-                                class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md ">
-                        </td>
-                        <td>
-                            <input :readonly="!isEditing" v-model="row.cantidadTotal"
-                                class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md ">
-                        </td>
-                        <td>
-                            <input :readonly="!isEditing" v-model="row.precioUnitario"
-                                class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md ">
-                        </td>
-                        <td>
-                            <input :readonly="!isEditing" v-model="row.precioTotal"
-                                class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md ">
-                        </td>
-                        <td>
-                            <input :readonly="!isEditing" v-model="row.tareaId"
-                                class=" focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md ">
-                        </td>
-                    </tr>
+                            </td>
+                            <td v-for="(field, index) in fieldSettings" :key="field.id">
+                                <div v-if="cellRefs" class="flex flex-grow " :ref="el => cellRefs[index] = el">
+                                    <div v-if="field.type === 'search'" class="flex flex-grow">
+                                        <input :readonly="!isEditing" v-model="(item as any)[field.fieldName]"
+                                            :style="{ width: `50px` }"
+                                            class="flex flex-grow focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md">
+                                        <button @click="selectRow(item), showModalArticulos = true"
+                                            :disabled="!isEditing"
+                                            class="bg-blue-200 px-2 rounded items-center justify-center">
+                                            <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
+                                        </button>
+                                    </div>
+                                    <input v-else class="flex flex-grow" :style="{ width: `50px` }"
+                                        :type="field.type === 'check' ? 'checkbox' : field.type === 'number' ? 'number' : 'text'"
+                                        :readonly="!field.isEditable || !isEditing"
+                                        v-model="(item as any)[field.fieldName]"
+                                        :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md': true }">
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -122,6 +90,23 @@
 
 <script lang="ts">
 
+interface ItemType {
+    id: number;
+}
+
+interface Campo {
+    id: number;
+    userId: number;
+    tableName: string;
+    fieldName: string;
+    tag: string;
+    type: string;
+    width: number;
+    order: number;
+    isEditable: number;
+    isHidden: number;
+}
+
 interface ArtTarea {
     id: number | null;
     articuloId: number | null;
@@ -136,16 +121,14 @@ interface ArtTarea {
     tareaId: number | null;
 }
 
+import interact from 'interactjs';
 import { ref, onMounted, watch } from 'vue';
-
-interface ItemType {
-    id: number;
-}
 
 export default {
     data() {
         return {
-            selectedId: null as number | null,
+            headerRefs: [] as any[],
+            cellRefs: [] as any[],
             // ...
         }
     },
@@ -161,10 +144,34 @@ export default {
         },
     },
 
+    mounted() {
+        interact('.resizable').resizable({
+            edges: { left: false, right: true, bottom: false, top: false },
+            listeners: {
+                move: (event) => {
+                    const { target, rect } = event;
+                    target.style.width = `${rect.width}px`;
+
+                    // Actualizar field.width
+                    const field = this.fieldSettings.find(field => field.fieldName === target.dataset.fieldName);
+                    if (field) {
+                        field.width = rect.width;
+
+                    }
+                },
+            },
+            modifiers: [
+                interact.modifiers.restrictSize({
+                    min: { width: 50, height: 50 },
+                }),
+            ],
+            inertia: true,
+        });
+    },
 
     methods: {
         isFieldEditable(fieldName: any) {
-            return this.editableFields[fieldName];
+            return this.fieldSettings[fieldName];
         },
 
         createRow() {
@@ -185,6 +192,41 @@ export default {
             this.consulta.push(newRow);
         },
 
+        // async updateCampoWidth(fieldName: string, newWidth: number) {
+        //     // Encuentra el campo específico en this.fieldSettings
+        //     const field = this.fieldSettings.find(field => field.fieldName === fieldName);
+        //     if (!field) {
+        //         console.error(`No se encontró el campo ${fieldName} en this.fieldSettings`);
+        //         return;
+        //     }
+
+        //     // Actualiza el ancho del campo
+        //     field.width = newWidth;
+        //     console.log('field.width: ', field.width);
+        //     const url = `http://localhost:3333/user_field_settings/table/art_tarea`;
+
+        //     const data = {
+        //         width: field.width,
+        //     };
+
+        //     try {
+        //         const response = await fetch(url, {
+        //             method: 'PUT', // o 'PATCH'
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //             },
+        //             body: JSON.stringify(data),
+        //         });
+
+        //         if (!response.ok) {
+        //             throw new Error(`HTTP error! status: ${response.status}`);
+        //         }
+
+        //         console.log('Campo width updated successfully');
+        //     } catch (error) {
+        //         console.error('An error occurred while updating campo width:', error);
+        //     }
+        // },
 
     },
 
@@ -192,7 +234,7 @@ export default {
         let consulta = ref<ArtTarea[]>([]);
         let open = ref(true);
         let selectedArtTarea = ref<ArtTarea | null>(null); // Nueva variable para almacenar el objeto ArtTarea seleccionado
-        let editableFields = ref([]);
+        let fieldSettings: Ref<Campo[]> = ref([]);
         let isEditing = ref(false);  // Nuevo estado
         let changedItems = ref<{ [key: string]: any }>({});
         let originalConsulta = ref([]);  // Nuevo estado
@@ -202,13 +244,13 @@ export default {
         const showModalArticulos = ref(false)
         const selectedId = ref<number | null>(null);
 
+
         const selectRow = (row: ArtTarea) => {
             if (showModalArticulos.value === false) { // Usar '===' en lugar de '='
                 selectedArtTarea.value = row; // Usar selectedArtTarea sin 'this'
                 console.log('Row selected: ', row.id);
             }
         };
-
 
         const deleteRowVisual = (rowToDelete: ArtTarea) => {
             const index = consulta.value.findIndex(row => row.id === rowToDelete.id);
@@ -240,11 +282,13 @@ export default {
         const updateRow = (newId: any) => {
             console.log('selectedArtTarea: ', selectedArtTarea.value, 'newId: ', newId);
             if (selectedArtTarea.value !== null && newId !== undefined) {
-                selectedArtTarea.value.articuloId = newId.id;
+                selectedArtTarea.value.articuloId = newId.articuloId;
                 selectedArtTarea.value.precioUnitario = newId.precio;
                 selectedArtTarea.value.articuloNombre = newId.articuloNombre;
                 selectedArtTarea.value.uniMedId = newId.articuloUniMed;
-                console.log('selectedArtTarea.articuloId: ', selectedArtTarea.value.articuloId);
+                console.log('selectedArtTarea.Articulo ID: ', selectedArtTarea.value.articuloId);
+            } else {
+                console.error('Error al actualizar el Articulo ID');
             }
         };
 
@@ -301,34 +345,84 @@ export default {
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                // let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
-                const camposResponse = await fetch(`http://localhost:3333/editables/${tableProp}`);  // campos editables
+                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/art_tarea`);  // campos editables
                 if (camposResponse.ok) {
                     const campos = await camposResponse.json();
-                    editableFields.value = campos;
+                    fieldSettings.value = campos.map((campo: Campo) => ({
+                        id: campo.id,
+                        userId: campo.userId,
+                        tableName: campo.tableName,
+                        fieldName: campo.fieldName,
+                        tag: campo.tag,
+                        type: campo.type,
+                        width: campo.width,
+                        order: campo.order,
+                        isEditable: campo.isEditable,
+                        isHidden: campo.isHidden
+                    }));
+                    console.log(tableProp); // Mostrar fieldSettings y sus campos
                 } else {
                     console.error('HTTP-Error desde GRILLA: ' + camposResponse.status);
                 }
                 if (contentType && contentType.includes("application/json")) {
                     const data = await response.json();
-                    consulta.value = data;
+                    consulta.value = data; // Asignar los datos directamente a consulta sin transformarlos
                 } else {
                     console.error('HTTP-Error desde GRILLA: La respuesta no es un JSON válido');
                 }
             } else {
                 console.error('HTTP-Error desde GRILLA: ' + response.status);
             }
-
+            console.log('fieldSettings: ', fieldSettings.value);
         });
 
 
-        const toggleEdit = () => {
+        const toggleEdit = async () => {
             if (!isEditing.value) {
                 originalConsulta.value = JSON.parse(JSON.stringify(consulta.value));
+
+                // Aquí puedes llamar a updateCampoWidth con los valores que necesites
+                // Asegúrate de reemplazar 'fieldName' y 'newWidth' con los valores correctos
+                await updateFieldSettings();
             }
             isEditing.value = !isEditing.value;
 
             console.log(props.medida);
+        };
+
+        const updateFieldSettings = async () => {
+            // Asegúrate de que fieldSettings.value contiene al menos un elemento
+            if (fieldSettings.value.length === 0) {
+                console.error('fieldSettings.value is empty');
+                return;
+            }
+
+            // Usa el userId y tableName del primer elemento en fieldSettings.value
+            const userId = fieldSettings.value[0].userId;
+            const tableName = fieldSettings.value[0].tableName;
+
+            // Crea la URL de tu API usando interpolación de cadenas
+            const url = `http://localhost:3333/user_field_settings/${userId}/${tableName}`;
+            console.log('url: ', url);
+
+            try {
+                // Haz una solicitud PUT o PATCH a tu API
+                const response = await fetch(url, {
+                    method: 'PUT', // o 'PATCH'
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(fieldSettings.value),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                console.log('Field settings updated successfully');
+            } catch (error) {
+                console.error('An error occurred while updating field settings:', error);
+            }
         };
 
         const cancelChanges = () => {
@@ -341,6 +435,7 @@ export default {
             const itemsToCreate: any[] = [];
             const itemsToUpdate: { [key: string]: any } = {};
 
+            // Comparar consulta.value con originalConsulta.value
             if (consulta.value && originalConsulta.value) {
                 consulta.value.forEach((item: any, index: any) => {
                     if (!originalConsulta.value[index]) {
@@ -419,26 +514,39 @@ export default {
             console.log('rutaGet: ', props.rutaGet);
 
             // Recargar la consulta
+            console.log('rutaGet: ', props.rutaGet);
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                // let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
-                const camposResponse = await fetch(`http://localhost:3333/editables/${tableProp}`);  // campos editables
+                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/art_tarea`);  // campos editables
                 if (camposResponse.ok) {
                     const campos = await camposResponse.json();
-                    editableFields.value = campos;
+                    fieldSettings.value = campos.map((campo: Campo) => ({
+                        id: campo.id,
+                        userId: campo.userId,
+                        tableName: campo.tableName,
+                        fieldName: campo.fieldName,
+                        tag: campo.tag,
+                        type: campo.type,
+                        width: campo.width,
+                        order: campo.order,
+                        isEditable: campo.isEditable,
+                        isHidden: campo.isHidden
+                    }));
+                    console.log(tableProp); // Mostrar fieldSettings y sus campos
                 } else {
                     console.error('HTTP-Error desde GRILLA: ' + camposResponse.status);
                 }
                 if (contentType && contentType.includes("application/json")) {
                     const data = await response.json();
-                    consulta.value = data;
+                    consulta.value = data; // Asignar los datos directamente a consulta sin transformarlos
                 } else {
                     console.error('HTTP-Error desde GRILLA: La respuesta no es un JSON válido');
                 }
             } else {
                 console.error('HTTP-Error desde GRILLA: ' + response.status);
             }
+            console.log('fieldSettings: ', fieldSettings.value);
             // Limpiar la copia original de consulta
             toggleEdit();
         };
@@ -447,7 +555,7 @@ export default {
             consulta,
             tareaId,
             open,
-            editableFields,
+            fieldSettings,
             toggleEdit,
             cancelChanges,
             isEditing,

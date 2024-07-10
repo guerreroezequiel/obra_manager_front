@@ -120,17 +120,20 @@ export default {
         let valores = ref<any[]>([]); // Definir valores aquí
         let currentPage = ref(1);
         let itemsPerPage = ref(10);
+
         const selectedId = ref<number | null>(null);
+        const selectedRow = ref<ItemType | null>(null);
 
         const selectRow = (item: ItemType) => {
             selectedId.value = item.id;
+            selectedRow.value = item;
         };
 
         const aceptar = async () => {
-            console.log('selectedId: ', selectedId.value);
-            if (selectedId.value !== null) {
-                await nuevaCopia(selectedId.value);
-                emit('aceptar');
+            // console.log('selectedRow: ', selectedRow.value);
+            if (selectedRow.value !== null) {
+                emit('aceptar', selectedRow.value);
+                console.log('selectedRowModal: ', selectedRow.value);
             }
         };
 
@@ -194,23 +197,6 @@ export default {
 
         }
 
-        const nuevaCopia = async (selectedId: number) => {
-            // console.log('selectedId: ', selectedId);
-            console.log(`http://localhost:3333/${tableProp}/copy/${selectedId}`)
-            console.log('props.fkPadre: ', props.fkPadre)
-            const response = await fetch(`http://localhost:3333/${tableProp}/copy/${selectedId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ moduloId: props.fkPadre }),
-            });
-
-            if (!response.ok) {
-                console.error('Error al enviar el elemento: ', response.url);
-            }
-        }
-
 
         return {
             consulta,
@@ -224,7 +210,6 @@ export default {
             currentItems,
             selectRow,
             aceptar,
-            nuevaCopia,
 
         };
     }

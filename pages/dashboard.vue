@@ -2,13 +2,12 @@
     <main class="flex ">
 
         <!-- MODALES -->
-        <DashForm :showModal="showModalEtapas" :rutaGet="'http://localhost:3333/etapas'"
-            @close="showModalEtapas = false" @aceptar="saveChanges" />
+        <!-- <DashForm :showModal="showModalEtapas" :rutaGet="'http://localhost:3333/etapas'"
+            @close="showModalEtapas = false" @aceptar="refreshData()" />
         <DashForm :showModal="showModalModulos" :rutaGet="'http://localhost:3333/modulos'"
-            @close="showModalModulos = false" @aceptar="saveChanges" />
-        <DashForm :showModal="showModalTareas" :rutaGet="'http://localhost:3333/tareas'"
-            @close="showModalTareas = false" @aceptar="saveChanges" />
-
+            @close="showModalModulos = false" @aceptar="refreshData()" /> -->
+        <ModalAgregar :showModal="showModalModulos" :rutaGet="'http://localhost:3333/models/modulos'"
+            @close="showModalModulos = false" @aceptar="refreshData()" />
         <!-- SIDENAV -->
         <div :class="{ 'w-96 ': sideNavOpen, 'w-0 ': !sideNavOpen }"
             class="flex flex-col sticky top-0 left-0 h-screen pt-10 bg-neutral-50 justify-center text-stone-700 duration-300 border-r-2 border-r-neutral-400">
@@ -27,7 +26,7 @@
                 <Icon v-else name="simple-line-icons:ban" class="h-12 hover:cursor-pointer " size="25"></Icon>
             </button>
 
-            <button v-show="isEditing" @click="saveChanges()" :disabled="!isEditing"
+            <button v-if="isEditing" @click="saveChanges()" :disabled="!isEditing"
                 class="absolute -right-9 p-1 bg-blue-300 border-r-2 border-b-2 border-neutral-400 text-black top-56  rounded-r-xl transition-all items-center active:scale-95 duration-100">
                 <Icon name="line-md:confirm" class="h-12 hover:cursor-pointer " size="25"></Icon>
             </button>
@@ -86,8 +85,10 @@
         <div v-if="obra" class="flex flex-col w-full p-2 ml-12 mr-12 mt-14 overflow-x-hidden">
             <input v-model="obra.nombre" type="text" class="text-gray-700 m-2 text-2xl font-bold" :readonly="!isEditing"
                 :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
-            <h1 class="text-gray-700 m-2 text-2xl font-bold">Medida: {{ obra.medida }} mt²</h1>
-
+            <p>Medida: <input v-model="obra.medida" type="number" class="text-gray-700 m-2 text-2xl font-bold w-auto"
+                    :readonly="!isEditing" :size="obra.medida.toString().length > 0 ? obra.medida.toString().length : 1"
+                    :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
+                mts</p>
             <div class="flex flex-col flex-grow rounded-b-xl items-center justify-center">
                 <!-- etapa -->
                 <div class="flex flex-col w-full rounded my-2 item-center justify-center shadow-md"
@@ -118,7 +119,9 @@
                         <!-- detalle -->
                         <div v-show="etapa.detalleVisible">
                             <div class="flex p-2 mx-1 rounded-md justify-between">
-                                <p class="text-gray-700">{{ etapa.descripcion }}</p>
+                                <input v-model="etapa.descripcion" type="text" class="text-gray-700 text-lg"
+                                    :readonly="!isEditing"
+                                    :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
                                 <button
                                     class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                                     @click="showModalModulos = true">Agregar Modulo +</button>
@@ -155,7 +158,9 @@
                         </div>
                         <div v-show="modulo.detalleVisible">
                             <div class="flex items-center justify-between">
-                                <p class="bg-gray-500 text-white rounded-md p-2">{{ modulo.descripcion }}</p>
+                                <input v-model="modulo.descripcion" type="text" class="text-gray-700 text-lg"
+                                    :readonly="!isEditing"
+                                    :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
 
                             </div>
 
@@ -164,13 +169,17 @@
                         <!-- TAREAS -->
                         <div v-show="!modulo.tareaVisible" class="flex flex-col ">
                             <!-- recorrer las tareas -->
-                            <div class="flex flex-col border border-slate-300 m-1 bg-gray-50 rounded-md py-1 px-2"
+                            <!-- <div class="flex flex-col border border-slate-300 m-1 bg-gray-50 rounded-md py-1 px-2"
                                 v-for="(tarea, index) in modulo.tareas.filter(tarea => !tarea.deleted)" :key="tarea.id"
+                                :ref="`tarea-${tarea.id}`"> -->
+                            <div class="flex flex-col border border-slate-300 m-1 bg-gray-50 rounded-md py-1 px-2"
+                                v-for="(tarea, tareaIndex) in computedTareas(modulo.id).value" :key="tarea.id"
                                 :ref="`tarea-${tarea.id}`">
-                                <div class="flex items-center justify-between p-1 ">
+                                <div class="flex items-center p-1 ">
                                     <div class="flex w-full items-center">
                                         <div
                                             class="flex items-center justify-between border-r border-slate-300 w-2/6 max-w-1/5 ">
+                                            {{ tarea.id }}
                                             <input v-model="tarea.nombre" type="text" class="text-gray-700 "
                                                 :readonly="!isEditing"
                                                 :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
@@ -178,11 +187,10 @@
                                                 <Icon name="simple-line-icons:arrow-down" />
                                             </button>
                                         </div>
-                                        <div class="flex w-2/6 max-w-1/5 items-center justify-between">
-                                            <p class="ml-3 text-blas border-r border-slate-300">{{
-                                                tarea.descripcion }}</p>
-
-
+                                        <div class="flex flex-grow justify-between">
+                                            <p class="ml-3 text-blas border-r border-slate-300 w-5/6 mr-2">
+                                                {{ tarea.descripcion }}</p>
+                                            <p class="w-1/6">${{ tarea.precioTotal }}</p>
                                         </div>
 
                                     </div>
@@ -199,31 +207,43 @@
                                 </div>
                                 <div class="flex flex-col">
                                     <!-- detalle -->
-                                    <div v-show="tarea.detalleVisible">
-                                        <p>Valor ${{ tarea.precioTotal }}</p>
+                                    <div v-show="tarea.detalleVisible" class="flex items-center">
+
+                                        <div class="flex">
+                                            <p>hereda medida:</p><input v-model="tarea.heredaMed" type="checkbox"
+                                                class="text-gray-700 text-lg" :disabled="!isEditing" />
+                                        </div>
+
+
                                     </div>
+
                                     <!-- ART_TAREAS -->
+                                    <!-- <div v-if="tarea.artTareasVisible" class="mt-4">
+                                        <GrillaArtTareas :rutaGet='rutaGet' :medida="Number(obra.medida)" />
+                                    </div> -->
                                     <div v-if="tarea.artTareasVisible" class="mt-4">
-                                        <GrillaArtTareas :rutaGet='rutaGet' :medida="obra.medida" />
+                                        <GrillaArtTareasCopia :rutaGet='rutaGet' :medida="Number(obra.medida)" />
                                     </div>
                                 </div>
                             </div>
                             <!-- botones para agregar -->
-                            <button v-show="isEditing"
+                            <button
                                 class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                                @click="showModalTareas = true">Agregar Tareas +</button>
+                                @click="setCurrentId(modulo.id)">Agregar Tareas +</button>
+                            <DashForm :showModal="showModalTareas" :rutaGet="'http://localhost:3333/tareas'"
+                                :fkPadre="currentId" @close="showModalTareas = false" @aceptar="refreshData()" />
                         </div>
 
                     </div>
-                    <button v-show="isEditing"
+                    <button
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                         @click="showModalModulos = true">Agregar Modulo +</button>
                 </div>
                 <div class="flex flex-grow justify-end">
-                    <button v-show="isEditing"
+                    <button
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                         @click="showModalEtapas = true">Crear Etapa +</button>
-                    <button v-show="isEditing"
+                    <button
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                         @click="showModalEtapas = true">Importar Etapa +</button>
                 </div> <!-- botones para agregar -->
@@ -300,7 +320,6 @@ interface Obra {
 
 import { ref, onMounted } from 'vue';
 import SideNav from '~/components/SideNav.vue';
-import TopNav from '~/components/TopNav.vue';
 
 export default {
     components: {
@@ -310,6 +329,7 @@ export default {
         return {
             table: 'obras',
             id: 1,
+            currentId: Number(null),
             // Declare the deletedEtapas property as an empty array
         };
     },
@@ -322,6 +342,12 @@ export default {
                 element[0].scrollIntoView({ behavior: 'smooth' });
             });
         },
+
+        setCurrentId(id: any) {
+            this.currentId = id;
+            this.showModalTareas = true;
+        },
+
     },
 
 
@@ -347,8 +373,11 @@ export default {
         let deletedModulos = ref<number[]>([]);
         let deletedTareas = ref<number[]>([]);
 
-
-
+        const computedTareas = (moduloId: number) => computed(() => {
+            return modulos.value
+                .find(modulo => modulo.id === moduloId)
+                ?.tareas.filter(tarea => !tarea.deleted) || [];
+        });
 
         // Carga los detalles de la obra
         onMounted(async () => {
@@ -368,6 +397,26 @@ export default {
                 console.error('HTTP-Error-obra: ' + response.status);
             }
         });
+
+        async function refreshData() {
+            console.log('refreshData start'); // Nuevo log
+
+            try {
+                const response = await fetch(`http://localhost:3333/obras/1/full`);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('fetch data ok'); // Nuevo log
+
+                    obra.value = data.obra;
+                    etapas.value = data.obra.etapas;
+                    modulos.value = data.obra.etapas.flatMap((etapa: Etapa) => etapa.modulos);
+                } else {
+                    console.error('HTTP-Error-obra-full ' + response.status);
+                }
+            } catch (error) {
+                console.error('Error in refreshData obra-full', error); // Nuevo log
+            }
+        }
 
 
         async function toggleEdit() {
@@ -429,12 +478,24 @@ export default {
         };
 
         const saveChanges = async () => {
+            let changedObra: { [key: string]: any } = {};
             let changedEtapas: { [key: string]: any } = {};
             let changedModulos: { [key: string]: any } = {};
             let changedTareas: { [key: string]: any } = {};
             let deletedEtapas: string[] = [];
             let deletedModulos: string[] = [];
             let deletedTareas: string[] = [];
+
+            // Para obra
+            // Para obra
+            // Para obra
+            if (obra.value && originalObra.value) {
+                Object.keys(obra.value).forEach(key => {
+                    if (obra.value && JSON.stringify(obra.value) !== JSON.stringify(originalObra.value)) {
+                        changedObra[obra.value.id] = obra.value;
+                    }
+                });
+            }
 
             // Para etapas
             if (etapas.value && originalEtapa.value) {
@@ -500,6 +561,7 @@ export default {
             }
 
             // Guardar los cambios para etapas, modulos y tareas
+            await saveChangedItems(changedObra, 'obras');
             await saveChangedItems(changedEtapas, 'etapas');
             await saveChangedItems(changedModulos, 'modulos');
             await saveChangedItems(changedTareas, 'tareas');
@@ -609,6 +671,8 @@ export default {
             deleteModulo,
             deleteTarea,
             saveChanges,
+            refreshData,
+            computedTareas,
 
         };
     }

@@ -18,6 +18,9 @@
             <button class="mr-6">
                 <a href="http://localhost:3000/Articulos">Articulos</a>
             </button>
+            <button class="mr-6">
+                <a href="http://localhost:3000/listas-de-precios">Listasdeprecios</a>
+            </button>
         </div>
 
         <div class="flex">
@@ -32,6 +35,9 @@
             </button>
             <button class="mr-6">
                 <a href="http://localhost:3000/Tareas">Tareas</a>
+            </button>
+            <button class="mr-6">
+                <a href="http://localhost:3000/art-tareas">art_tareas</a>
             </button>
 
             <button class="mr-6">
