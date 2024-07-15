@@ -10,26 +10,37 @@
             @close="showModalModulos = false" @aceptar="refreshData()" />
         <!-- SIDENAV -->
         <div :class="{ 'w-96 ': sideNavOpen, 'w-0 ': !sideNavOpen }"
-            class="flex flex-col sticky top-0 left-0 h-screen pt-10 bg-neutral-50 justify-center text-stone-700 duration-300 border-r-2 border-r-neutral-400">
+            class="flex flex-col sticky top-0 left-0 h-screen pt-10 bg-gray-100 justify-center duration-300 border-r-2 border-r-slate-400 text-slate-600">
 
             <button @click="sideNavOpen = !sideNavOpen"
-                class="absolute -right-9 p-1 bg-gray-200 border-r-2 border-b-2 border-neutral-400 text-black top-24  rounded-r-xl transition-all items-center active:scale-95 duration-100">
+                class="absolute -right-[37px] p-1 bg-gray-200 border-r-2 border-b-2 border-neutral-400 text-black top-24  rounded-r-xl transition-all items-center active:scale-95 duration-100">
                 <Icon v-if="sideNavOpen" name="mdi:folder-open-outline" class="h-12 hover:cursor-pointer " size="25">
                 </Icon>
                 <Icon v-else name="mdi:folder-search-outline" class="h-12 hover:cursor-pointer " size="25"></Icon>
             </button>
 
-            <button :class="{ 'bg-gray-200': !isEditing, 'bg-red-300': isEditing }" @click="toggleEdit()" class=" absolute -right-9 p-1 border-r-2 border-b-2 border-neutral-400 text-black top-40 rounded-r-xl
-                transition-all items-center active:scale-95 duration-100">
-                <Icon v-if="!isEditing" name="simple-line-icons:pencil" class="h-12 hover:cursor-pointer " size="25">
+            <!-- <button v-if="!isEditing" @click="saveChanges()" :disabled="isEditing"
+                class="absolute -right-[37px] p-1 bg-gray-200 border-r-2 border-b-2 border-neutral-400 text-black top-56  rounded-r-xl transition-all items-center active:scale-95 duration-100">
+                <Icon name="material-symbols:delete-outline-rounded" class="h-12 hover:cursor-pointer " size="25">
                 </Icon>
-                <Icon v-else name="simple-line-icons:ban" class="h-12 hover:cursor-pointer " size="25"></Icon>
+            </button> -->
+
+            <button v-if="!isEditing" :class="{ 'bg-gray-200': !isEditing }" @click="toggleEdit()" class="absolute -right-[37px] p-1 border-r-2 border-b-2 border-neutral-400 text-black top-40 rounded-r-xl
+                transition-all items-center active:scale-95 duration-100">
+                <Icon name="simple-line-icons:pencil" class="h-12 hover:cursor-pointer " size="25"></Icon>
+            </button>
+            <button v-else :class="{ 'bg-red-300': isEditing }" @click="toggleEdit()" class="absolute -right-[37px] p-1 border-r-2 border-b-2 border-neutral-400 text-black top-40 rounded-r-xl
+                transition-all items-center active:scale-95 duration-100">
+                <Icon name="simple-line-icons:ban" class="h-12 hover:cursor-pointer " size="25"></Icon>
             </button>
 
             <button v-if="isEditing" @click="saveChanges()" :disabled="!isEditing"
-                class="absolute -right-9 p-1 bg-blue-300 border-r-2 border-b-2 border-neutral-400 text-black top-56  rounded-r-xl transition-all items-center active:scale-95 duration-100">
+                class="absolute -right-[37px] p-1 bg-blue-300 border-r-2 border-b-2 border-neutral-400 text-black top-56  rounded-r-xl transition-all items-center active:scale-95 duration-100">
                 <Icon name="line-md:confirm" class="h-12 hover:cursor-pointer " size="25"></Icon>
             </button>
+
+
+
 
             <div class="flex flex-col mt-12 items-center p-4" v-if="obra">
                 <div class="flex flex-row min-h-10 w-full justify-between ring-1 focus:ring-blue-500 rounded-md">
@@ -168,10 +179,6 @@
 
                         <!-- TAREAS -->
                         <div v-show="!modulo.tareaVisible" class="flex flex-col ">
-                            <!-- recorrer las tareas -->
-                            <!-- <div class="flex flex-col border border-slate-300 m-1 bg-gray-50 rounded-md py-1 px-2"
-                                v-for="(tarea, index) in modulo.tareas.filter(tarea => !tarea.deleted)" :key="tarea.id"
-                                :ref="`tarea-${tarea.id}`"> -->
                             <div class="flex flex-col border border-slate-300 m-1 bg-gray-50 rounded-md py-1 px-2"
                                 v-for="(tarea, tareaIndex) in computedTareas(modulo.id).value" :key="tarea.id"
                                 :ref="`tarea-${tarea.id}`">
@@ -190,11 +197,10 @@
                                         <div class="flex flex-grow justify-between">
                                             <p class="ml-3 text-blas border-r border-slate-300 w-5/6 mr-2">
                                                 {{ tarea.descripcion }}</p>
-                                            <p class="w-1/6">${{ tarea.precioTotal }}</p>
+                                            <p class="w-1/6">{{ tarea.precioTotal }}</p>
                                         </div>
 
                                     </div>
-                                    <!-- detalle -->
                                     <button @click="verDetalleTareas(tarea)"
                                         class="text-blue-500 px-3 min-w-max text-sm">
                                         <p>Ver detalle</p>
@@ -218,9 +224,6 @@
                                     </div>
 
                                     <!-- ART_TAREAS -->
-                                    <!-- <div v-if="tarea.artTareasVisible" class="mt-4">
-                                        <GrillaArtTareas :rutaGet='rutaGet' :medida="Number(obra.medida)" />
-                                    </div> -->
                                     <div v-if="tarea.artTareasVisible" class="mt-4">
                                         <GrillaArtTareasCopia :rutaGet='rutaGet' :medida="Number(obra.medida)" />
                                     </div>
@@ -228,25 +231,28 @@
                             </div>
                             <!-- botones para agregar -->
                             <button
-                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                                @click="setCurrentId(modulo.id)">Agregar Tareas +</button>
+                                class="mt-1 mx-1 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:w-auto sm:text-sm active:bg-gray-300"
+                                @click="crearTarea">Crear Tareas +</button>
+                            <button v-if="!isEditing"
+                                class="mx-1 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:w-auto sm:text-sm active:bg-gray-300"
+                                @click="setCurrentId(modulo.id)">Importar Tareas +</button>
                             <DashForm :showModal="showModalTareas" :rutaGet="'http://localhost:3333/tareas'"
                                 :fkPadre="currentId" @close="showModalTareas = false" @aceptar="refreshData()" />
                         </div>
 
                     </div>
-                    <button
+                    <button v-if="!isEditing"
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                        @click="showModalModulos = true">Agregar Modulo +</button>
+                        @click="showModalModulos = true">Importar Modulo +</button>
                 </div>
                 <div class="flex flex-grow justify-end">
-                    <button
+                    <button v-if="!isEditing"
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                         @click="showModalEtapas = true">Crear Etapa +</button>
-                    <button
+                    <button v-if="!isEditing"
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                         @click="showModalEtapas = true">Importar Etapa +</button>
-                </div> <!-- botones para agregar -->
+                </div>
             </div>
 
         </div>
@@ -318,6 +324,8 @@ interface Obra {
     etapas: Etapa[];
 }
 
+import { format, parseISO } from 'date-fns';
+import { is } from 'date-fns/locale';
 import { ref, onMounted } from 'vue';
 import SideNav from '~/components/SideNav.vue';
 
@@ -347,7 +355,6 @@ export default {
             this.currentId = id;
             this.showModalTareas = true;
         },
-
     },
 
 
@@ -378,6 +385,52 @@ export default {
                 .find(modulo => modulo.id === moduloId)
                 ?.tareas.filter(tarea => !tarea.deleted) || [];
         });
+
+        const formatDate = (dateString: string) => {
+            const date = parseISO(dateString);
+            return format(date, 'dd-MM-yyyy');
+        };
+
+        const formatPrice = (price: Number) => {
+            return price.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'symbol' });
+        };
+
+        const crearTarea = () => {
+            const nuevaTarea: Tarea = {
+                id: 0,
+                nombre: 'NuevaTarea',
+                habilitado: true,
+                descripcion: 'Descripcion de nueva',
+                precioTotal: 0,
+                condicion: '',
+                condBool: 0,
+                heredaMed: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                moduloId: modulos.value[0].id,
+                artTareasVisible: false,
+                detalleVisible: false,
+                deleted: false,
+                artTareas: [],
+            };
+            if (modulos.value.length > 0) {
+                modulos.value[0].tareas.push(nuevaTarea);
+            }
+            isEditing.value = true;
+            // Actualizar tareas.value
+            tareas.value = [...tareas.value, nuevaTarea];
+        };
+
+        const guardarTarea = (tarea: Tarea) => {
+            const modulo = modulos.value.find(m => m.tareas.some(t => t.id === tarea.id));
+            if (modulo) {
+                const index = modulo.tareas.findIndex(t => t.id === tarea.id);
+                if (index !== -1) {
+                    modulo.tareas.splice(index, 1, tarea);
+                }
+            }
+            isEditing.value = false;
+        };
 
         // Carga los detalles de la obra
         onMounted(async () => {
@@ -487,8 +540,6 @@ export default {
             let deletedTareas: string[] = [];
 
             // Para obra
-            // Para obra
-            // Para obra
             if (obra.value && originalObra.value) {
                 Object.keys(obra.value).forEach(key => {
                     if (obra.value && JSON.stringify(obra.value) !== JSON.stringify(originalObra.value)) {
@@ -539,6 +590,25 @@ export default {
                 });
             }
 
+
+            // Identificar las tareas nuevas
+            const newTareas = tareas.value.filter((item: any) => item.id === 0);
+            console.log('newTareas: ', newTareas);
+            // Crear las tareas nuevas en el servidor
+            for (const tarea of newTareas) {
+                const response = await fetch(`http://localhost:3333/tareas`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(tarea),
+                });
+
+                if (!response.ok) {
+                    console.error('Error al enviar el elemento: ', response.url);
+                }
+            }
+
             // Para tareas
             if (tareas.value && originalTarea.value) {
                 originalTarea.value.forEach((item: any) => {
@@ -572,7 +642,7 @@ export default {
             await deleteItems(deletedTareas, 'tareas');
 
 
-
+            refreshData();
             isEditing.value = false;
         }
 
@@ -673,6 +743,9 @@ export default {
             saveChanges,
             refreshData,
             computedTareas,
+            formatPrice,
+            crearTarea,
+            guardarTarea,
 
         };
     }

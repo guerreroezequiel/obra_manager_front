@@ -1,15 +1,6 @@
 <template>
-    <div v-if="tareaId" class="flex flex-col p-2 rounded-lg">
+    <div class="flex flex-col p-2 rounded-lg">
 
-        <!-- <h1 class="font-mono ">{{ tableProp }}</h1> -->
-        <!--    <div class="flex flex-col my-3 py-5" v-if="consulta">
-            <input
-                class="rounded-md p-2 w-80 bg-gray-200 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
-                type="text" placeholder="Buscar" />
-        </div> -->
-        <ModalArticuloArtTarea :fkPadre=tareaId :showModal="showModalArticulos"
-            :rutaGet="'http://localhost:3333/lis_pre'" @close.native="showModalArticulos = false"
-            @aceptar="updateRow" />
         <div class="flex flex-col" v-if="consulta && fieldSettings" :class="{ 'visible ': open, 'invisible ': !open }">
 
             <div
@@ -39,23 +30,50 @@
                             <td v-for="(field, index) in fieldSettings" :key="field.id">
                                 <div v-if="cellRefs" class="flex flex-grow " :ref="el => cellRefs[index] = el">
                                     <div v-if="field.type === 'search'" class="flex flex-grow">
-                                        <input :readonly="!isEditing" v-model="(item as any)[field.fieldName]"
+                                        <input :readonly="!isEditing"
+                                            :value="nombres[`${field.fieldName}_${(item as any)[field.fieldName]}`]"
                                             :style="{ width: `50px` }"
                                             class="flex flex-grow focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md">
-                                        <button @click="selectRow(item), showModalArticulos = true"
+                                        <button @click="selectRow(item), openModal(field.fieldName)"
                                             :disabled="!isEditing"
                                             class="bg-blue-200 px-2 rounded items-center justify-center">
                                             <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
                                         </button>
+                                        <ModalElegirId :showModal="showModalRubros"
+                                            :rutaGet="'http://localhost:3333/rubroId'"
+                                            @close.native="showModalRubros = false"
+                                            @aceptar="updateRow($event, 'rubroId')" />
+                                        <ModalElegirId :showModal="showModalMarcas"
+                                            :rutaGet="'http://localhost:3333/marcaId'"
+                                            @close.native="showModalMarcas = false"
+                                            @aceptar="updateRow($event, 'marcaId')" />
+                                        <ModalElegirId :showModal="showModalTipos"
+                                            :rutaGet="'http://localhost:3333/tipoId'"
+                                            @close.native="showModalTipos = false"
+                                            @aceptar="updateRow($event, 'tipoId')" />
                                     </div>
-                                    <input v-if="field.type === 'check'" class="flex flex-grow"
+                                    <select v-else-if="field.type === 'list'" class="flex flex-grow bg-white rounded"
+                                        :style="{ width: `50px` }" :disabled="!field.isEditable || !isEditing"
+                                        v-model="(item as any)[field.fieldName]"
+                                        :class="{ 'bg-slate-200': !field.isEditable && isEditing, 'focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md': true }">
+                                        <option v-for="(uniMed, index) in uniMeds"
+                                            v-if="field.fieldName === 'uniMedId' || field.fieldName === 'uniMedPack'"
+                                            :key="'uniMed-' + index" :value="uniMed">{{ uniMed }}</option>
+                                        <option v-for="(presentacion, index) in presentaciones"
+                                            v-else-if="field.fieldName === 'presentacionId'"
+                                            :key="'presentacion-' + index" :value="presentacion.id"
+                                            :selected="presentacion.id === (item as any)[field.fieldName]">
+                                            {{ presentacion.nombre }}
+                                        </option>
+                                    </select>
+                                    <input v-else-if="field.type === 'check'" class="flex flex-grow"
                                         :style="{ width: `50px` }" type="checkbox"
                                         :disabled="!field.isEditable || !isEditing"
                                         v-model="(item as any)[field.fieldName]"
                                         :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md': true }">
 
-                                    <input v-else class="flex flex-grow" :style="{ width: `50px` }"
-                                        :type="field.type === 'number' ? 'number' : 'text'"
+                                    <input v-else :type="field.type === 'number' ? 'number' : 'text'"
+                                        class="flex flex-grow" :style="{ width: `50px` }"
                                         :readonly="!field.isEditable || !isEditing"
                                         v-model="(item as any)[field.fieldName]"
                                         :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md': true }">
@@ -67,8 +85,6 @@
             </div>
         </div>
         <div class="flex justify-between mt-3 my-1">
-            <p class="text-lg font-bold">Total: {{ formatPrice(totalPrecioTotal) }}</p>
-
             <div>
                 <button class="w-20 h-7 m-1 rounded-md"
                     :class="{ 'bg-sky-400 text-white': !isEditing, 'bg-gray-400': isEditing }"
@@ -111,6 +127,12 @@ interface ItemType {
     id: number;
 }
 
+interface NombreXid {
+    id: number;
+    nombre: string;
+
+}
+
 interface Campo {
     id: number;
     userId: number;
@@ -124,23 +146,27 @@ interface Campo {
     isHidden: number;
 }
 
-interface ArtTarea {
-    id: number | null;
-    articuloId: number | null;
-    articuloNombre: string | null;
-    uniMedId: string | null;
+interface Articulo {
+    id: number;
+    nombre: string;
     descripcion: string | null;
-    heredaMed: boolean;
-    cantidad: number;
-    cantidadTotal: number;
-    precioUnitario: number;
-    precioTotal: number;
-    tareaId: number | null;
+    canPack: number | null;
+    rendimiento: number | null;
+    tipoId: number | null;
+    rubroId: number | null;
+    marcaId: number | null;
+    presentacionId: number | null;
+    habilitado: boolean | null;
+    uniMedId: string;
+    uniMedPack: string;
+    estado: number | null;
 }
 
 import interact from 'interactjs';
 import { ref, onMounted, watch } from 'vue';
 import { format, parseISO } from 'date-fns';
+import { ca } from 'date-fns/locale';
+import ModalElegirId from '../modal/ModalElegirId.vue';
 
 
 export default {
@@ -148,6 +174,10 @@ export default {
         return {
             headerRefs: [] as any[],
             cellRefs: [] as any[],
+            nombres: {} as Record<string, string>,
+            showModalField: '' as string,
+            field: { fieldName: '' },
+            rutaActual: '',
             // ...
         }
     },
@@ -155,10 +185,6 @@ export default {
     props: {
         rutaGet: {
             type: String,
-            required: true,
-        },
-        medida: {
-            type: Number,
             required: true,
         },
     },
@@ -226,9 +252,17 @@ export default {
         sortedFieldSettings() {
             return this.fieldSettings.sort((a, b) => a.order - b.order);
         },
+
+
     },
 
     methods: {
+
+        // Mostrar el modal para elegir un ID
+        showModal(field: string) {
+            this.showModalField = field;
+        },
+
         // Devuelve true si el campo es editable
         isFieldEditable(fieldName: any) {
             return this.fieldSettings[fieldName];
@@ -238,26 +272,101 @@ export default {
             // Crear un nuevo objeto ArtTarea con campos vacíos
             const newRow = {
                 id: 0,
-                articuloId: 1,
-                articuloNombre: '',
+                nombre: 'Nuevo articulo',
+                descripcion: 'Descripcion de nuevo articulo',
+                canPack: 0,
+                rendimiento: 0,
+                tipoId: 1,
+                rubroId: 1,
+                marcaId: 1,
+                presentacionId: 1,
+                habilitado: true,
                 uniMedId: 'mts',
-                descripcion: '',
-                heredaMed: false,
-                cantidad: 0,
-                cantidadTotal: 0,
-                precioUnitario: 0,
-                precioTotal: 0,
-                tareaId: this.tareaId // establecer tareaId igual a la tareaId de la primera fila
+                uniMedPack: 'mts',
+                estado: 1,
             };
             this.consulta.push(newRow);
-        }
+        },
 
+        // Obtener el nombre de un campo por su ID
+        async fetchNombre(id: number, fieldName: string) {
+            if (id === null) {
+                console.error('ID es null');
+                return;
+            }
+
+            let url;
+            switch (fieldName) {
+                case 'rubroId':
+                    url = `http://localhost:3333/rubros/${id}`;
+                    break;
+                case 'marcaId':
+                    url = `http://localhost:3333/marcas/${id}`;
+                    break;
+                case 'tipoId':
+                    url = `http://localhost:3333/tipos/${id}`;
+                    break;
+                // Agrega más casos según sea necesario
+                default:
+                    console.error('Nombre de campo no reconocido');
+                    return;
+            }
+
+            const response = await fetch(url);
+            const data = await response.json();
+            this.nombres[`${fieldName}_${id}`] = data.nombre; // Usar una combinación de fieldName e id como clave
+        },
+
+        openModal(fieldName: string) {
+            switch (fieldName) {
+                case 'rubroId':
+                    this.showModalRubros = true;
+                    break;
+                case 'marcaId':
+                    this.showModalMarcas = true;
+                    break;
+                case 'tipoId':
+                    this.showModalTipos = true;
+                    break;
+                default:
+                    console.error(`No se encontró un modal para el fieldName: ${fieldName}`);
+            }
+        },
+    },
+
+    // Cargar los nombres de los campos al inicio
+    created() {
+        for (let item of this.consulta) {
+            for (let field in item) {
+                if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') {
+                    if (item[field] !== null) {
+                        this.fetchNombre(item[field] as number, field);
+                    }
+                }
+            }
+        }
+    },
+
+    // Actualizar los nombres de los campos al cambiar la consulta
+    watch: {
+        consulta: {
+            immediate: true,
+            handler(newValue) {
+                for (let item of newValue) {
+                    for (let field in item) {
+                        if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') { // Añade más campos si es necesario
+                            this.fetchNombre(item[field], field);
+                        }
+                    }
+                }
+            }
+        }
     },
 
     setup(props, { emit }) {
-        let consulta = ref<ArtTarea[]>([]);
+        let consulta = ref<Articulo[]>([]);
         let open = ref(true);
-        let selectedArtTarea = ref<ArtTarea | null>(null); // Nueva variable para almacenar el objeto ArtTarea seleccionado
+        let selected = ref<Articulo | null>(null); // Nueva variable para almacenar el objeto ArtTarea seleccionado
         let fieldSettings: Ref<Campo[]> = ref([]);
         let isEditing = ref(false);  // Nuevo estado
         let isDeleting = ref(false);  // Nuevo estado
@@ -266,73 +375,30 @@ export default {
         let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
         let tareaId = parseInt(new URL(props.rutaGet).pathname.split('/').pop() || '') || null;
         let deletedRows = ref<ItemType[]>([]);
+        let uniMeds = ref<string[]>([]);
+        let presentaciones = ref<NombreXid[]>([]);
         const showModalArticulos = ref(false)
+        const showModalRubros = ref(false)
+        const showModalMarcas = ref(false)
+        const showModalTipos = ref(false)
         const selectedId = ref<number | null>(null);
 
-        const recalculateTotal = (index: number) => {
-            consulta.value[index].precioTotal = consulta.value[index].cantidad * consulta.value[index].precioUnitario;
-        };
-
-        const recalculateCantidadTotal = (index: number) => {
-            consulta.value[index].cantidadTotal = consulta.value[index].cantidad * props.medida;
-        };
-
-        const totalPrecioTotal = computed(() => {
-            return consulta.value.reduce((total, item) => total + (+item.precioTotal || 0), 0);
-        });
-
-        watch(totalPrecioTotal, (newTotalTotal) => {
-
-            emit('update-total', newTotalTotal);
-        });
-
-        // Watcher para recalcular el precio total de un artículo cuando cambia la cantidad o el precio unitario
-        watch(consulta, (newValue, oldValue) => {
-            newValue.forEach((item, index) => {
-                watch([
-                    () => consulta.value[index].cantidad,
-                    () => consulta.value[index].precioUnitario],
-                    () => recalculateTotal(index));
-
-                watch(() => consulta.value[index].cantidad, (newCantidad) => {
-                    if (consulta.value[index].heredaMed == true) {
-                        recalculateCantidadTotal(index);
-                    }
-                });
-
-                watch(() => consulta.value[index].heredaMed, (newHeredaMed) => {
-                    if (newHeredaMed == true) {
-                        recalculateCantidadTotal(index);
-                        consulta.value[index].precioTotal = consulta.value[index].cantidadTotal * consulta.value[index].precioUnitario;
-                    } else {
-                        consulta.value[index].cantidadTotal = 0;
-                        consulta.value[index].precioTotal = consulta.value[index].cantidad * consulta.value[index].precioUnitario;
-                    }
-                });
-
-
-            });
-
-
-        }, { deep: true });
 
         const formatDate = (dateString: string) => {
             const date = parseISO(dateString);
             return format(date, 'dd-MM-yyyy');
         };
 
-        const formatPrice = (price: Number) => {
-            return price.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'symbol' });
-        };
 
         async function refreshData() {
             // Recargar la consulta
-            console.log('rutaGet: ', props.rutaGet);
+            console.log('rutaGet desde all articulos: ', props.rutaGet);
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/art_tarea`);  // campos editables
+                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/articulos`);  // campos editables
                 if (camposResponse.ok) {
+                    console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
                     fieldSettings.value = campos.map((campo: Campo) => ({
                         id: campo.id,
@@ -346,18 +412,19 @@ export default {
                         isEditable: campo.isEditable,
                         isHidden: campo.isHidden
                     }));
-                    console.log(tableProp); // Mostrar fieldSettings y sus campos
+                    console.log('okey'); // Mostrar fieldSettings y sus campos
                 } else {
                     console.error('HTTP-Error desde GRILLA: ' + camposResponse.status);
                 }
                 if (contentType && contentType.includes("application/json")) {
                     const data = await response.json();
-                    consulta.value = data.map((item: { createdAt: string, updatedAt: string, heredaMed: number }) => ({
+                    consulta.value = data.map((item: { createdAt: string, updatedAt: string, habilitado: number, }) => ({
                         ...item,
                         createdAt: formatDate(item.createdAt),
                         updatedAt: formatDate(item.updatedAt),
-                        heredaMed: item.heredaMed == 1 ? true : false,
+                        habilitado: item.habilitado == 1 ? true : false,
                     }));
+                    console.log('consulta: ', consulta.value);
                 } else {
                     console.error('HTTP-Error desde GRILLA: La respuesta no es un JSON válido');
                 }
@@ -373,20 +440,38 @@ export default {
         onMounted(async () => {
             // Cargar la consulta
             refreshData();
+
+            // Cargar las unidades de medida
+            const responseUni = await fetch('http://localhost:3333/uni_meds');
+            const responsePre = await fetch('http://localhost:3333/presentacions');
+            if (responseUni.ok) {
+                uniMeds.value = await responseUni.json();
+                console.log('uniMeds: ', uniMeds.value);
+            } else {
+                console.error('HTTP-Error: ' + responseUni.status);
+            }
+            if (responsePre.ok) {
+                presentaciones.value = await responsePre.json();
+                console.log('uniMeds: ', presentaciones.value);
+            } else {
+                console.error('HTTP-Error: ' + responsePre.status);
+            }
         });
 
-        // Función para seleccionar una fila
-        const selectRow = (row: ArtTarea) => {
-            if (showModalArticulos.value === false) {
-                selectedArtTarea.value = row;
+        //seleccionar una fila
+        const selectRow = (row: Articulo) => {
+            if (showModalRubros.value == false && showModalMarcas.value == false && showModalTipos.value == false) {
+                selected.value = row;
+
                 console.log('Row selected: ', row.id);
+                console.log('selectedArticulo: ', selected.value);
             } else {
-                console.log('Row selected: rota');
+                console.log('Row selected: rota ' + 'showModalRubros: ' + showModalRubros.value + 'showModalMarcas: ' + showModalMarcas.value + 'showModalTipos: ' + showModalTipos.value);
             }
         };
 
-        // Función para eliminar una fila visualmente
-        const deleteRowVisual = (rowToDelete: ArtTarea) => {
+        // eliminar una fila visualmente
+        const deleteRowVisual = (rowToDelete: Articulo) => {
             const consultaCopy = [...consulta.value];
             const index = consultaCopy.findIndex(row => row.id === rowToDelete.id);
             if (index !== -1 && index < consultaCopy.length && consultaCopy[index]) {
@@ -396,44 +481,60 @@ export default {
             }
         };
 
-        // Función para eliminar una fila de la base de datos
+        // eliminar una fila de la base de datos
         const deleteRows = async () => {
             console.log('deletedRows: ', deletedRows.value);
 
             for (let row of deletedRows.value) {
                 console.log(`http://localhost:3333/${tableProp}/${row.id}`)
-                const response = await fetch(`http://localhost:3333/${tableProp}/${row.id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ habilitado: false }),
-                });
+                try {
+                    const response = await fetch(`http://localhost:3333/${tableProp}/${row.id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
 
-                if (!response.ok) {
-                    console.error('Error al actualizar el elemento: ', response.url);
+                    if (!response.ok) {
+                        const data = await response.json();
+                        console.error('Error al eliminar la fila: ', data.error);
+                    }
+                } catch (error) {
+                    console.error('Error al eliminar la fila: ', error);
                 }
             }
+
             // Clear the deletedRows array after all rows have been deleted
             deletedRows.value = [];
             refreshData();
         };
 
-        const updateRow = (newId: any) => {
-            console.log('selectedArtTarea: ', selectedArtTarea.value, 'newId: ', newId);
-            if (selectedArtTarea.value !== null && newId !== undefined) {
-                selectedArtTarea.value.articuloId = newId.articuloId;
-                selectedArtTarea.value.precioUnitario = newId.precio;
-                selectedArtTarea.value.articuloNombre = newId.articuloNombre;
-                selectedArtTarea.value.descripcion = newId.articuloDescripcion;
-                selectedArtTarea.value.uniMedId = newId.articuloUniMed;
-                console.log('selectedArtTarea.Articulo ID: ', selectedArtTarea.value.articuloId);
+        // Actualizar el ID de una fila seleccionada
+        const updateRow = (newId: any, modalField: string) => {
+            if (selected.value !== null && newId !== undefined) {
+                switch (modalField) {
+                    case 'rubroId':
+                        selected.value.rubroId = newId.id;
+                        console.log('selectedRowModal rubroId: ', selected.value.rubroId);
+                        break;
+                    case 'marcaId':
+                        selected.value.marcaId = newId.id;
+                        console.log('selectedRowModal marcaId: ', selected.value.marcaId);
+                        break;
+                    case 'tipoId':
+                        selected.value.tipoId = newId.id;
+                        console.log('selectedRowModal tipoId: ', selected.value.tipoId);
+                        break;
+                    default:
+                        console.error(`No se encontró un campo para el modalField: ${modalField}`);
+                }
+                console.log('selectedRowModal ID: ', selected.value.id);
             } else {
-                console.error('Error al actualizar el Articulo ID');
+                console.error('Error al actualizar el RowModal');
             }
         };
 
-        // Función para activar o desactivar el modo de edición
+        //  activar o desactivar el modo de edición
         const toggleEdit = async () => {
             if (!isEditing.value) {
                 originalConsulta.value = JSON.parse(JSON.stringify(consulta.value));
@@ -453,7 +554,7 @@ export default {
         };
 
 
-        // Función para actualizar el ancho de un campo en la base de datos
+        // actualizar el ancho de un campo en la base de datos
         const updateFieldSettings = async () => {
             if (fieldSettings.value.length === 0) {
                 console.error('fieldSettings.value is empty');
@@ -553,21 +654,7 @@ export default {
                 }
             }
 
-            // guardas totalPrecioTotal
-            const responseTotal = await fetch(`http://localhost:3333/tareas/${consulta.value[0].tareaId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ precioTotal: totalPrecioTotal.value })
-            });
-            console.log('ruta preciioTotal: ', responseTotal.url);
-
-            if (!responseTotal.ok) {
-                console.error('Error al guardar totalPrecio en  la tareas: ', responseTotal.url);
-            }
-            console.log({ precioTotal: totalPrecioTotal })
-            console.log(` ruta para totalPrecioTotal http://localhost:3333/tareas/${consulta.value[0].tareaId}`)
+            // Limpiar los objetos
             for (let prop in itemsToUpdate) {
                 delete itemsToUpdate[prop];
             }
@@ -575,15 +662,14 @@ export default {
             await updateFieldSettings();
 
             originalConsulta.value = [];
-            console.log('rutaGet: ', props.rutaGet);
-
-            // Recargar la consulta
 
             refreshData();
         };
 
         return {
             consulta,
+            uniMeds,
+            presentaciones,
             tareaId,
             open,
             fieldSettings,
@@ -595,15 +681,14 @@ export default {
             saveChanges,
             deleteRows,
             tableProp,
-            recalculateTotal,
-            recalculateCantidadTotal,
-            totalPrecioTotal,
             showModalArticulos,
+            showModalRubros,
+            showModalMarcas,
+            showModalTipos,
             updateRow,
             selectRow,
-            selectedArtTarea,
             deleteRowVisual,
-            formatPrice,
+            selected,
         };
     }
 };

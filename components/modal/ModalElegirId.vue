@@ -106,10 +106,7 @@ export default {
             type: Boolean,
             required: true
         },
-        fkPadre: {
-            type: Number,
-            required: true,
-        }
+
     },
 
     setup(props, { emit }) {
@@ -130,7 +127,7 @@ export default {
         };
 
         const aceptar = async () => {
-            console.log('selectedRow: ', selectedRow.value);
+            console.log('selectedRowRowModal:', selectedRow.value);
             if (selectedRow.value !== null) {
                 emit('aceptar', selectedRow.value);
                 console.log('selectedRowModal: ', selectedRow.value);
@@ -144,7 +141,11 @@ export default {
         });
 
         onMounted(async () => {
+            await refreshData();
+        });
 
+        const refreshData = async () => {
+            console.log('rutaGet: ', props.rutaGet)
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
@@ -169,7 +170,7 @@ export default {
             } else {
                 console.error('HTTP-Error desde GRILLA: ' + response.status);
             }
-        });
+        }
 
         const aplicarBusqueda = async () => {
             const response = await fetch(props.rutaGet + '/' + busqueda.value);
