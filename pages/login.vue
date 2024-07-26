@@ -1,0 +1,65 @@
+<template>
+    <div class="min-h-screen flex items-center justify-center bg-gray-100">
+        <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+            <h1 class="text-2xl font-bold mb-6 text-center">Login</h1>
+            <form @submit.prevent="login">
+                <div class="mb-4">
+                    <label for="email" class="block text-gray-700">Correo Electrónico</label>
+                    <input type="email" v-model="email" id="email" required
+                        class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring focus:border-blue-300" />
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-700">Contraseña</label>
+                    <input type="password" v-model="password" id="password" required
+                        class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring focus:border-blue-300" />
+                </div>
+                <button type="submit"
+                    class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-300">Iniciar
+                    Sesión</button>
+            </form>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const email = ref('')
+const password = ref('')
+const router = useRouter()
+
+const login = async () => {
+    try {
+        const response = await fetch('http://localhost:3333/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email.value,
+                password: password.value
+            })
+        })
+
+        if (!response.ok) {
+            throw new Error('Error en la solicitud')
+        }
+
+        const data = await response.json()
+        console.log(data)
+
+        // Guarda el token en el almacenamiento local o en una cookie
+        localStorage.setItem('authToken', data.token.token)
+
+        // Redirige a la página principal o a donde necesites
+        router.push('/')
+    } catch (error) {
+        console.error('Error en el login:', error)
+    }
+}
+</script>
+
+<style scoped>
+/* Puedes agregar estilos adicionales aquí si es necesario */
+</style>

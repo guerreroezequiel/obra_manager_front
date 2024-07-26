@@ -1,6 +1,6 @@
 <template>
     <NuxtLayout>
-        <main class="flex flex-col">
+        <main class="mt-10 p-12">
             <h1 class="p-2">index page</h1>
             <p>
                 Lorem ipsum dolor sit amet consectetur adipisicing elit.
@@ -11,3 +11,10 @@
         </main>
     </NuxtLayout>
 </template>
+
+<script lang="ts">
+
+// definePageMeta({
+//     middleware: 'auth'
+// })
+</script>

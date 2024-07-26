@@ -5,7 +5,7 @@ import LoggedLayout from './layouts/LoggedLayout.vue';
 
 <template>
   <div>
-    <LoggedLayout v-if="$route.name !== 'index'">
+    <LoggedLayout v-if="$route.name !== 'login'">
       <NuxtPage />
     </LoggedLayout>
     <NuxtPage v-else />

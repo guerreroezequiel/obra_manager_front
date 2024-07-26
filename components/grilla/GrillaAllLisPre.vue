@@ -1,5 +1,23 @@
 <template>
     <div class="flex flex-col p-2 rounded-lg">
+        <div class="flex flex-col p-2 rounded-lg">
+            <!-- Modal agregar lista-->
+            <div v-if="showModalNuevaLista"
+                class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                <div class="bg-white p-4 rounded-lg shadow-lg w-1/3">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg">Agregar nueva Lista de Precios</h2>
+                        <button @click="showModalNuevaLista = false" class="text-black">&times;</button>
+                    </div>
+                    <input type="text" v-model="newPreLisIdName" placeholder="Nombre"
+                        class="p-2 border rounded w-full mb-4">
+                    <button @click="addPreLisId"
+                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 w-full">
+                        Agregar
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <div class="flex flex-col" v-if="consulta && fieldSettings" :class="{ 'visible ': open, 'invisible ': !open }">
 
@@ -39,44 +57,58 @@
                                             class="bg-blue-200 px-2 rounded items-center justify-center">
                                             <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
                                         </button>
-                                        <ModalElegirId :showModal="showModalRubros"
-                                            :rutaGet="'http://localhost:3333/rubroId'"
-                                            @close.native="showModalRubros = false"
-                                            @aceptar="updateRow($event, 'rubroId')" />
-                                        <ModalElegirId :showModal="showModalMarcas"
-                                            :rutaGet="'http://localhost:3333/marcaId'"
-                                            @close.native="showModalMarcas = false"
-                                            @aceptar="updateRow($event, 'marcaId')" />
-                                        <ModalElegirId :showModal="showModalTipos"
-                                            :rutaGet="'http://localhost:3333/tipoId'"
-                                            @close.native="showModalTipos = false"
-                                            @aceptar="updateRow($event, 'tipoId')" />
+                                        <ModalElegirId :showModal="showModalProveedores"
+                                            :rutaGet="'http://localhost:3333/proveedores'"
+                                            @close.native="showModalProveedores = false"
+                                            @aceptar="updateRow($event, 'proveedorId')" />
+                                        <ModalElegirId :showModal="showModalArticulos"
+                                            :rutaGet="'http://localhost:3333/articulos'"
+                                            @close.native="showModalArticulos = false"
+                                            @aceptar="updateRow($event, 'articuloId')" />
+
                                     </div>
                                     <select v-else-if="field.type === 'list'" class="flex flex-grow bg-white rounded"
                                         :style="{ width: `50px` }" :disabled="!field.isEditable || !isEditing"
                                         v-model="(item as any)[field.fieldName]"
                                         :class="{ 'bg-slate-200': !field.isEditable && isEditing, 'focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md': true }">
-                                        <option v-for="(uniMed, index) in uniMeds"
-                                            v-if="field.fieldName === 'uniMedId' || field.fieldName === 'uniMedPack'"
-                                            :key="'uniMed-' + index" :value="uniMed">{{ uniMed }}</option>
-                                        <option v-for="(presentacion, index) in presentaciones"
-                                            v-else-if="field.fieldName === 'presentacionId'"
-                                            :key="'presentacion-' + index" :value="presentacion.id"
-                                            :selected="presentacion.id === (item as any)[field.fieldName]">
-                                            {{ presentacion.nombre }}
+                                        <option v-for="(lisPreIds, index) in lisPreIds" :key="'lisPreIds-' + index"
+                                            :value="lisPreIds.id">
+                                            {{ lisPreIds.nombre }}
                                         </option>
                                     </select>
+                                    <div v-else-if="isEditing && field.type === 'number'"
+                                        class="flex flex-grow items-center justify-start rounded-md">
+                                        <input type="number" :style="{ width: `50px` }"
+                                            class="flex-grow focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md"
+                                            :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'bg-white': field.isEditable }"
+                                            :disabled="!field.isEditable"
+                                            v-model.number="(item as any)[field.fieldName]">
+                                    </div>
                                     <input v-else-if="field.type === 'check'" class="flex flex-grow"
                                         :style="{ width: `50px` }" type="checkbox"
                                         :disabled="!field.isEditable || !isEditing"
                                         v-model="(item as any)[field.fieldName]"
                                         :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md': true }">
 
-                                    <input v-else :type="field.type === 'number' ? 'number' : 'text'"
-                                        class="flex flex-grow" :style="{ width: `50px` }"
+                                    <div v-else-if="isEditing && field.type === 'price'"
+                                        class="flex flex-grow items-center justify-start rounded-md">
+                                        <input type="number" :style="{ width: `50px` }"
+                                            class="flex-grow focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md"
+                                            :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'bg-white': field.isEditable }"
+                                            :disabled="!field.isEditable"
+                                            v-model.number="(item as any)[field.fieldName]">
+                                    </div>
+                                    <div v-else-if="field.type === 'price'" :style="{ width: `50px` }"
+                                        class="flex flex-grow items-center justify-start px-2 py-1 rounded-md "
+                                        :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'bg-white': field.isEditable }">
+                                        {{ formatPrice((item as any)[field.fieldName]) }}
+                                    </div>
+                                    <input v-else
+                                        class="flex flex-grow focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md "
+                                        :type="field.type === 'text' ? 'text' : 'text'" :style="{ width: `50px` }"
                                         :readonly="!field.isEditable || !isEditing"
                                         v-model="(item as any)[field.fieldName]"
-                                        :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md': true }">
+                                        :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'bg-white': field.isEditable }">
                                 </div>
                             </td>
                         </tr>
@@ -86,8 +118,14 @@
 
         </div>
 
-        <div class="flex justify-end mt-3 my-1 ">
+        <div class="flex justify-between mt-3 my-1 ">
+            <button @click="showModalNuevaLista = true"
+                class="px-2 pb-1 h-7 rounded-md bg-blue-500 text-white hover:bg-blue-600 justify-self-end">
+                Agregar Lista
+            </button>
             <div class="flex space-x-1 items-center ">
+                <!-- Botón para abrir la modal agregar lista-->
+
                 <button class="w-20 h-7 rounded-md"
                     :class="{ 'bg-sky-400 text-white': !isEditing, 'bg-gray-400': isEditing }"
                     v-if="!isEditing && !isDeleting" @click="toggleDelete()">
@@ -158,26 +196,22 @@ interface Campo {
     isHidden: number;
 }
 
-interface Articulo {
+interface LisPre {
     id: number;
-    nombre: string;
+    listaId: number;
+    articuloId: number;
+    proveedorId: number;
+    precioCompra: number;
+    precioVenta: number;
+    markup: number;
     descripcion: string | null;
-    canPack: number | null;
-    rendimiento: number | null;
-    tipoId: number | null;
-    rubroId: number | null;
-    marcaId: number | null;
-    presentacionId: number | null;
     habilitado: boolean | null;
-    uniMedId: string;
-    uniMedPack: string;
-    estado: number | null;
 }
 
 import interact from 'interactjs';
 import { ref, onMounted, watch } from 'vue';
 import { format, parseISO } from 'date-fns';
-import { ca } from 'date-fns/locale';
+import { ar, ca } from 'date-fns/locale';
 import ModalElegirId from '../modal/ModalElegirId.vue';
 
 
@@ -230,7 +264,7 @@ export default {
                     move: (event) => {
                         if (debounceTimer) clearTimeout(debounceTimer);
                         debounceTimer = setTimeout(() => {
-                            console.log('event: ', event);
+
                             const { target } = event;
                             const fieldIndex = parseInt(target.dataset.index);
                             const field = this.fieldSettings[fieldIndex];
@@ -296,22 +330,31 @@ export default {
             if (this.currentPage > 1) this.currentPage--;
         },
 
+        formatPrice(price: number) {
+            if (price === null) {
+                return "N/A";
+            }
+            // Asegúrate de que el precio es un número antes de intentar formatearlo
+            const numericPrice = Number(price);
+            if (isNaN(numericPrice)) {
+                return "Invalid";
+            }
+            // Utiliza toLocaleString para formatear el precio en el formato local deseado
+            return numericPrice.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+        },
+
         createRow() {
             // Crear un nuevo objeto ArtTarea con campos vacíos
             const newRow = {
                 id: 0,
-                nombre: 'Nuevo articulo',
-                descripcion: 'Descripcion de nuevo articulo',
-                canPack: 0,
-                rendimiento: 0,
-                tipoId: 1,
-                rubroId: 1,
-                marcaId: 1,
-                presentacionId: 1,
-                habilitado: true,
-                uniMedId: 'mts',
-                uniMedPack: 'mts',
-                estado: 1,
+                listaId: 1,
+                articuloId: 0,
+                proveedorId: 0,
+                precioCompra: 0,
+                precioVenta: 0,
+                markup: 0,
+                descripcion: null,
+                habilitado: false,
             };
             this.consulta.push(newRow);
         },
@@ -325,14 +368,11 @@ export default {
 
             let url;
             switch (fieldName) {
-                case 'rubroId':
-                    url = `http://localhost:3333/rubros/${id}`;
+                case 'articuloId':
+                    url = `http://localhost:3333/articulos/${id}`;
                     break;
-                case 'marcaId':
-                    url = `http://localhost:3333/marcas/${id}`;
-                    break;
-                case 'tipoId':
-                    url = `http://localhost:3333/tipos/${id}`;
+                case 'proveedorId':
+                    url = `http://localhost:3333/proveedores/${id}`;
                     break;
                 // Agrega más casos según sea necesario
                 default:
@@ -347,14 +387,11 @@ export default {
 
         openModal(fieldName: string) {
             switch (fieldName) {
-                case 'rubroId':
-                    this.showModalRubros = true;
+                case 'proveedorId':
+                    this.showModalProveedores = true;
                     break;
-                case 'marcaId':
-                    this.showModalMarcas = true;
-                    break;
-                case 'tipoId':
-                    this.showModalTipos = true;
+                case 'articuloId':
+                    this.showModalArticulos = true;
                     break;
                 default:
                     console.error(`No se encontró un modal para el fieldName: ${fieldName}`);
@@ -366,7 +403,7 @@ export default {
     created() {
         for (let item of this.consulta) {
             for (let field in item) {
-                if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') {
+                if (field === 'articuloId' || field === 'proveedorId') {
                     if (item[field] !== null) {
                         this.fetchNombre(item[field] as number, field);
                     }
@@ -382,7 +419,7 @@ export default {
             handler(newValue) {
                 for (let item of newValue) {
                     for (let field in item) {
-                        if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') { // Añade más campos si es necesario
+                        if (field === 'articuloId' || field === 'proveedorId') { // Añade más campos si es necesario
                             this.fetchNombre(item[field], field);
                         }
                     }
@@ -392,9 +429,9 @@ export default {
     },
 
     setup(props, { emit }) {
-        let consulta = ref<Articulo[]>([]);
+        let consulta = ref<LisPre[]>([]);
         let open = ref(true);
-        let selected = ref<Articulo | null>(null); // Nueva variable para almacenar el objeto ArtTarea seleccionado
+        let selected = ref<LisPre | null>(null); // Nueva variable para almacenar el objeto ArtTarea seleccionado
         let fieldSettings: Ref<Campo[]> = ref([]);
         let isEditing = ref(false);  // Nuevo estado
         let isDeleting = ref(false);  // Nuevo estado
@@ -403,13 +440,51 @@ export default {
         let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
         let tareaId = parseInt(new URL(props.rutaGet).pathname.split('/').pop() || '') || null;
         let deletedRows = ref<ItemType[]>([]);
-        let uniMeds = ref<string[]>([]);
-        let presentaciones = ref<NombreXid[]>([]);
+        let lisPreIds = ref<NombreXid[]>([]);
+        const showModalProveedores = ref(false)
         const showModalArticulos = ref(false)
-        const showModalRubros = ref(false)
-        const showModalMarcas = ref(false)
-        const showModalTipos = ref(false)
+        const showModalNuevaLista = ref(false)
+        const newPreLisIdName = ref('');
         const selectedId = ref<number | null>(null);
+
+        const addPreLisId = async () => {
+            const apiUrl = 'http://localhost:3333/lis_pre_ids'; // URL de tu API
+            const data = {
+                nombre: newPreLisIdName.value, // Datos que se enviarán
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST', // Método HTTP POST
+                    headers: {
+                        'Content-Type': 'application/json', // Tipo de contenido
+                        // 'Authorization': 'Bearer tu_token' // Autenticación, si es necesario
+                    },
+                    body: JSON.stringify(data), // Cuerpo de la solicitud
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.statusText}`);
+                }
+
+                const responseData = await response.json();
+                console.log(responseData); // Manejo de la respuesta de la API
+                showModalNuevaLista.value = false; // Cierra la modal
+                newPreLisIdName.value = ''; // Limpia el campo de entrada
+
+                // Recargar la lista de IDs
+                const responseLisPreIds = await fetch('http://localhost:3333/lis_pre_ids');
+                if (responseLisPreIds.ok) {
+                    lisPreIds.value = await responseLisPreIds.json();
+                    console.log('lisPreIds: ', lisPreIds.value);
+                } else {
+                    console.error('HTTP-Error: ' + responseLisPreIds.status);
+                }
+            } catch (error) {
+                console.error('Error al agregar preLisId:', error);
+                // Manejo de errores
+            }
+        };
 
 
         const formatDate = (dateString: string) => {
@@ -420,11 +495,11 @@ export default {
 
         async function refreshData() {
             // Recargar la consulta
-            console.log('rutaGet desde all articulos: ', props.rutaGet);
+            console.log('rutaGet desde all lispre: ', props.rutaGet);
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/articulos`);  // campos editables
+                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/lis_pre`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -454,10 +529,10 @@ export default {
                     }));
                     console.log('consulta: ', consulta.value);
                 } else {
-                    console.error('HTTP-Error desde GRILLA: La respuesta no es un JSON válido');
+                    console.error('HTTP-Error desde allLisPre: La respuesta no es un JSON válido');
                 }
             } else {
-                console.error('HTTP-Error desde GRILLA: ' + response.status);
+                console.error('HTTP-Error desde alllispre: ' + response.status);
             }
 
             // Limpiar la copia original de consulta
@@ -468,38 +543,29 @@ export default {
         onMounted(async () => {
             // Cargar la consulta
             refreshData();
-
-            // Cargar las unidades de medida
-            const responseUni = await fetch('http://localhost:3333/uni_meds');
-            const responsePre = await fetch('http://localhost:3333/presentacions');
-            if (responseUni.ok) {
-                uniMeds.value = await responseUni.json();
-                console.log('uniMeds: ', uniMeds.value);
+            const responseLisPreIds = await fetch('http://localhost:3333/lis_pre_ids');
+            if (responseLisPreIds.ok) {
+                lisPreIds.value = await responseLisPreIds.json();
+                console.log('lisPreIds: ', lisPreIds.value);
             } else {
-                console.error('HTTP-Error: ' + responseUni.status);
-            }
-            if (responsePre.ok) {
-                presentaciones.value = await responsePre.json();
-                console.log('uniMeds: ', presentaciones.value);
-            } else {
-                console.error('HTTP-Error: ' + responsePre.status);
+                console.error('HTTP-Error: ' + responseLisPreIds.status);
             }
         });
 
         //seleccionar una fila
-        const selectRow = (row: Articulo) => {
-            if (showModalRubros.value == false && showModalMarcas.value == false && showModalTipos.value == false) {
+        const selectRow = (row: LisPre) => {
+            if (showModalProveedores.value == false && showModalArticulos.value == false) {
                 selected.value = row;
 
                 console.log('Row selected: ', row.id);
-                console.log('selectedArticulo: ', selected.value);
+                console.log('selectedLisPRe: ', selected.value);
             } else {
-                console.log('Row selected: rota ' + 'showModalRubros: ' + showModalRubros.value + 'showModalMarcas: ' + showModalMarcas.value + 'showModalTipos: ' + showModalTipos.value);
+                console.log('Row selected: rota ' + 'showModalProveedores: ' + showModalProveedores.value + 'showModalArticulos: ' + showModalArticulos.value);
             }
         };
 
         // eliminar una fila visualmente
-        const deleteRowVisual = (rowToDelete: Articulo) => {
+        const deleteRowVisual = (rowToDelete: LisPre) => {
             const consultaCopy = [...consulta.value];
             const index = consultaCopy.findIndex(row => row.id === rowToDelete.id);
             if (index !== -1 && index < consultaCopy.length && consultaCopy[index]) {
@@ -541,22 +607,18 @@ export default {
         const updateRow = (newId: any, modalField: string) => {
             if (selected.value !== null && newId !== undefined) {
                 switch (modalField) {
-                    case 'rubroId':
-                        selected.value.rubroId = newId.id;
-                        console.log('selectedRowModal rubroId: ', selected.value.rubroId);
+                    case 'articuloId':
+                        console.log('selectedRowModal ID: ', selected.value.id);
+                        selected.value.articuloId = newId.id;
+                        selected.value.descripcion = newId.descripcion;
                         break;
-                    case 'marcaId':
-                        selected.value.marcaId = newId.id;
-                        console.log('selectedRowModal marcaId: ', selected.value.marcaId);
-                        break;
-                    case 'tipoId':
-                        selected.value.tipoId = newId.id;
-                        console.log('selectedRowModal tipoId: ', selected.value.tipoId);
+                    case 'proveedorId':
+                        selected.value.proveedorId = newId.id;
                         break;
                     default:
                         console.error(`No se encontró un campo para el modalField: ${modalField}`);
                 }
-                console.log('selectedRowModal ID: ', selected.value.id);
+                // console.log('selectedRowModal ID: ', selected.value.id);
             } else {
                 console.error('Error al actualizar el RowModal');
             }
@@ -696,8 +758,7 @@ export default {
 
         return {
             consulta,
-            uniMeds,
-            presentaciones,
+            lisPreIds,
             tareaId,
             open,
             fieldSettings,
@@ -709,10 +770,11 @@ export default {
             saveChanges,
             deleteRows,
             tableProp,
+            showModalNuevaLista,
+            newPreLisIdName,
+            addPreLisId,
+            showModalProveedores,
             showModalArticulos,
-            showModalRubros,
-            showModalMarcas,
-            showModalTipos,
             updateRow,
             selectRow,
             deleteRowVisual,

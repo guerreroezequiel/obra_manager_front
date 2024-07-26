@@ -41,6 +41,7 @@
                                     <div v-if="field.type === 'search'" class="flex flex-grow">
                                         <input :readonly="!isEditing" v-model="(item as any)[field.fieldName]"
                                             :style="{ width: `50px` }"
+                                            :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'bg-white': field.isEditable }"
                                             class="flex flex-grow focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md">
                                         <button @click="selectRow(item), showModalArticulos = true"
                                             :disabled="!isEditing"
@@ -48,17 +49,39 @@
                                             <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
                                         </button>
                                     </div>
-                                    <input v-if="field.type === 'check'" class="flex flex-grow"
+                                    <input v-else-if="field.type === 'check'" class="flex flex-grow"
                                         :style="{ width: `50px` }" type="checkbox"
                                         :disabled="!field.isEditable || !isEditing"
                                         v-model="(item as any)[field.fieldName]"
-                                        :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md': true }">
+                                        :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'bg-white': field.isEditable }">
 
-                                    <input v-else class="flex flex-grow" :style="{ width: `50px` }"
-                                        :type="field.type === 'number' ? 'number' : 'text'"
+                                    <div v-else-if="isEditing && field.type === 'number'"
+                                        class="flex flex-grow items-center justify-start rounded-md">
+                                        <input type="number" :style="{ width: `50px` }"
+                                            class="flex-grow focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md"
+                                            :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'bg-white': field.isEditable }"
+                                            :disabled="!field.isEditable"
+                                            v-model.number="(item as any)[field.fieldName]">
+                                    </div>
+                                    <div v-else-if="isEditing && field.type === 'price'"
+                                        class="flex flex-grow items-center justify-start rounded-md">
+                                        <input type="number" :style="{ width: `50px` }"
+                                            class="flex-grow focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md"
+                                            :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'bg-white': field.isEditable }"
+                                            :disabled="!field.isEditable"
+                                            v-model.number="(item as any)[field.fieldName]">
+                                    </div>
+                                    <div v-else-if="field.type === 'price'" :style="{ width: `50px` }"
+                                        class="flex flex-grow items-center justify-start px-2 py-1 rounded-md "
+                                        :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'bg-white': field.isEditable }">
+                                        {{ formatPrice((item as any)[field.fieldName]) }}
+                                    </div>
+                                    <input v-else
+                                        class="flex flex-grow focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md "
+                                        :type="field.type === 'text' ? 'text' : 'text'" :style="{ width: `50px` }"
                                         :readonly="!field.isEditable || !isEditing"
                                         v-model="(item as any)[field.fieldName]"
-                                        :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md': true }">
+                                        :class="{ 'bg-gray-300': !field.isEditable && isEditing, 'bg-white': field.isEditable }">
                                 </div>
                             </td>
                         </tr>
@@ -68,6 +91,8 @@
         </div>
         <div class="flex justify-between mt-3 my-1">
             <p class="text-lg font-bold">Total: {{ formatPrice(totalPrecioTotal) }}</p>
+            <p class="text-lg font-bold">Subtotal: {{ formatPrice(subtotalPrecioTotal) }}</p>
+            <p class="text-lg font-bold">Descuento: {{ totalDescuento }}%</p>
 
             <div>
                 <button class="w-20 h-7 m-1 rounded-md"
@@ -84,15 +109,15 @@
                     @click="cancelChanges()">
                     <p>Cancelar</p>
                 </button>
-                <button class="w-20 h-7 m-1 rounded-md"
+                <button class="w-20 h-7 ml-1 rounded-md"
                     :class="{ 'bg-sky-400 text-white': isEditing || isDeleting, 'bg-gray-400': !isEditing && !isDeleting }"
                     @click="isEditing ? saveChanges() : deleteRows()" :disabled="!isEditing && !isDeleting"
                     v-if="isEditing || isDeleting">
                     <p>Guardar</p>
                 </button>
                 <button class="w-20 h-7 m-1 rounded-md"
-                    :class="{ 'bg-sky-400 text-white': isEditing, 'bg-gray-400': !isEditing }" @click="createRow"
-                    :disabled="!isEditing">
+                    :class="{ 'bg-sky-400 text-white': isEditing, 'opacity-50 bg-gray-400 cursor-not-allowed': !isEditing }"
+                    @click="createRow" :disabled="!isEditing">
                     <p>Crear</p>
                 </button>
 
@@ -130,11 +155,11 @@ interface ArtTarea {
     articuloNombre: string | null;
     uniMedId: string | null;
     descripcion: string | null;
-    heredaMed: boolean;
     cantidad: number;
-    cantidadTotal: number;
     precioUnitario: number;
-    precioTotal: number;
+    descuento: number;
+    total: number;
+    subtotal: number;
     tareaId: number | null;
 }
 
@@ -222,7 +247,7 @@ export default {
 
 
     computed: {
-        //ordenar los campos por el orden
+        // Ordenar los campos por el orden y filtrar los que están ocultos
         sortedFieldSettings() {
             return this.fieldSettings.sort((a, b) => a.order - b.order);
         },
@@ -246,11 +271,26 @@ export default {
                 cantidad: 0,
                 cantidadTotal: 0,
                 precioUnitario: 0,
-                precioTotal: 0,
+                subtotal: 0,
+                total: 0,
+                descuento: 1,
                 tareaId: this.tareaId // establecer tareaId igual a la tareaId de la primera fila
             };
             this.consulta.push(newRow);
-        }
+        },
+
+        formatPrice(price: number) {
+            if (price === null) {
+                return "N/A";
+            }
+            // Asegúrate de que el precio es un número antes de intentar formatearlo
+            const numericPrice = Number(price);
+            if (isNaN(numericPrice)) {
+                return "Invalid";
+            }
+            // Utiliza toLocaleString para formatear el precio en el formato local deseado
+            return numericPrice.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+        },
 
     },
 
@@ -270,59 +310,70 @@ export default {
         const selectedId = ref<number | null>(null);
 
         const recalculateTotal = (index: number) => {
-            consulta.value[index].precioTotal = consulta.value[index].cantidad * consulta.value[index].precioUnitario;
-        };
-
-        const recalculateCantidadTotal = (index: number) => {
-            consulta.value[index].cantidadTotal = consulta.value[index].cantidad * props.medida;
+            consulta.value[index].total = consulta.value[index].cantidad * consulta.value[index].precioUnitario;
         };
 
         const totalPrecioTotal = computed(() => {
-            return consulta.value.reduce((total, item) => total + (+item.precioTotal || 0), 0);
+            return consulta.value.reduce((total, item) => total + (+item.total || 0), 0);
+        });
+        const subtotalPrecioTotal = computed(() => {
+            return consulta.value.reduce((subtotal, item) => subtotal + (+item.subtotal || 0), 0);
         });
 
-        watch(totalPrecioTotal, (newTotalTotal) => {
-
-            emit('update-total', newTotalTotal);
+        const totalDescuento = computed(() => {
+            if (subtotalPrecioTotal.value === 0) {
+                return 0; // Evita la división por cero
+            }
+            const diferencia = totalPrecioTotal.value - subtotalPrecioTotal.value;
+            const descuento = (diferencia / subtotalPrecioTotal.value) * -100;
+            return parseFloat(descuento.toFixed(2));
         });
 
-        // Watcher para recalcular el precio total de un artículo cuando cambia la cantidad o el precio unitario
+        // Observa los cambios en totalPrecioTotal y emite un evento con el nuevo valor
+        watch(totalPrecioTotal, (nuevoValor) => {
+            emit('actualizarTotal', nuevoValor);
+        });
+
+        watch(subtotalPrecioTotal, (nuevoValor) => {
+            emit('actualizarSubtotal', nuevoValor);
+        });
+
+
         watch(consulta, (newValue, oldValue) => {
             newValue.forEach((item, index) => {
+                // Watcher para cantidad y precioUnitario para recalcular subtotal
                 watch([
                     () => consulta.value[index].cantidad,
                     () => consulta.value[index].precioUnitario],
-                    () => recalculateTotal(index));
+                    () => {
+                        const nuevoSubtotal = consulta.value[index].cantidad * consulta.value[index].precioUnitario;
+                        if (consulta.value[index].subtotal !== nuevoSubtotal) {
+                            consulta.value[index].subtotal = nuevoSubtotal;
+                            // Recalcular total solo si el subtotal cambia
+                            const descuentoValido = consulta.value[index].descuento && !isNaN(consulta.value[index].descuento) ? consulta.value[index].descuento : 0;
+                            const factorDescuento = descuentoValido !== 0 ? (1 - descuentoValido / 100) : 1;
+                            consulta.value[index].total = nuevoSubtotal * factorDescuento;
+                        }
+                    }
+                );
 
-                watch(() => consulta.value[index].cantidad, (newCantidad) => {
-                    if (consulta.value[index].heredaMed == true) {
-                        recalculateCantidadTotal(index);
+                // Watcher para descuento para recalcular total basado en el nuevo subtotal
+                watch(() => consulta.value[index].descuento, (newDescuento) => {
+                    const descuentoValido = newDescuento && !isNaN(newDescuento) ? newDescuento : 0;
+                    const factorDescuento = descuentoValido !== 0 ? (1 - descuentoValido / 100) : 1;
+                    const nuevoTotal = consulta.value[index].subtotal * factorDescuento;
+                    if (consulta.value[index].total !== nuevoTotal) {
+                        consulta.value[index].total = nuevoTotal;
                     }
                 });
-
-                watch(() => consulta.value[index].heredaMed, (newHeredaMed) => {
-                    if (newHeredaMed == true) {
-                        recalculateCantidadTotal(index);
-                        consulta.value[index].precioTotal = consulta.value[index].cantidadTotal * consulta.value[index].precioUnitario;
-                    } else {
-                        consulta.value[index].cantidadTotal = 0;
-                        consulta.value[index].precioTotal = consulta.value[index].cantidad * consulta.value[index].precioUnitario;
-                    }
-                });
-
 
             });
-
 
         }, { deep: true });
 
         const formatDate = (dateString: string) => {
             const date = parseISO(dateString);
             return format(date, 'dd-MM-yyyy');
-        };
-
-        const formatPrice = (price: Number) => {
-            return price.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'symbol' });
         };
 
         async function refreshData() {
@@ -423,7 +474,7 @@ export default {
             console.log('selectedArtTarea: ', selectedArtTarea.value, 'newId: ', newId);
             if (selectedArtTarea.value !== null && newId !== undefined) {
                 selectedArtTarea.value.articuloId = newId.articuloId;
-                selectedArtTarea.value.precioUnitario = newId.precio;
+                selectedArtTarea.value.precioUnitario = newId.precioVenta;
                 selectedArtTarea.value.articuloNombre = newId.articuloNombre;
                 selectedArtTarea.value.descripcion = newId.articuloDescripcion;
                 selectedArtTarea.value.uniMedId = newId.articuloUniMed;
@@ -437,8 +488,6 @@ export default {
         const toggleEdit = async () => {
             if (!isEditing.value) {
                 originalConsulta.value = JSON.parse(JSON.stringify(consulta.value));
-
-                await updateFieldSettings();
             }
             isEditing.value = !isEditing.value;
             isDeleting.value = false;
@@ -559,14 +608,14 @@ export default {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ precioTotal: totalPrecioTotal.value })
+                body: JSON.stringify({ total: totalPrecioTotal.value, subtotal: subtotalPrecioTotal.value, descuento: totalDescuento.value })
             });
             console.log('ruta preciioTotal: ', responseTotal.url);
 
             if (!responseTotal.ok) {
                 console.error('Error al guardar totalPrecio en  la tareas: ', responseTotal.url);
             }
-            console.log({ precioTotal: totalPrecioTotal })
+            console.log({ total: totalPrecioTotal })
             console.log(` ruta para totalPrecioTotal http://localhost:3333/tareas/${consulta.value[0].tareaId}`)
             for (let prop in itemsToUpdate) {
                 delete itemsToUpdate[prop];
@@ -580,6 +629,8 @@ export default {
             // Recargar la consulta
 
             refreshData();
+            emit('changesSaved', { total: totalPrecioTotal.value, subtotal: subtotalPrecioTotal.value, descuento: totalDescuento.value });
+
         };
 
         return {
@@ -596,14 +647,14 @@ export default {
             deleteRows,
             tableProp,
             recalculateTotal,
-            recalculateCantidadTotal,
             totalPrecioTotal,
+            subtotalPrecioTotal,
+            totalDescuento,
             showModalArticulos,
             updateRow,
             selectRow,
             selectedArtTarea,
             deleteRowVisual,
-            formatPrice,
         };
     }
 };

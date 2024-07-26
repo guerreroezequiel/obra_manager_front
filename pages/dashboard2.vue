@@ -92,7 +92,7 @@
                                     <!-- art_tareas -->
                                     <div v-if="tarea.artTareasVisible" class="mt-4 ">
                                         <div class="">
-                                            <GrillaArtTareas :rutaGet='rutaGet' :medida="obra.medida" />
+                                            <GrillaArtTareasCopia :rutaGet='rutaGet' :medida="obra.medida" />
                                         </div>
                                     </div>
                                 </div>

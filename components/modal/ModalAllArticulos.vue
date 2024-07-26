@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col p-2 rounded-lg">
+    <div class="flex flex-col p-2 rounded-lg fixed z-10 inset-0 overflow-y-auto" v-if="showModal">
 
         <div class="flex flex-col" v-if="consulta && fieldSettings" :class="{ 'visible ': open, 'invisible ': !open }">
 
@@ -87,49 +87,42 @@
         </div>
 
         <div class="flex justify-end mt-3 my-1 ">
-            <div class="flex space-x-1 items-center ">
-                <button class="w-20 h-7 rounded-md"
-                    :class="{ 'bg-sky-400 text-white': !isEditing, 'bg-gray-400': isEditing }"
-                    v-if="!isEditing && !isDeleting" @click="toggleDelete()">
-                    <p>Eliminar</p>
+            <div class="flex flex-row-reverse absolute right-6">
+                <button type="button" @click="aceptar(); $emit('close');"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Aceptar
                 </button>
-                <button class="items-center w-20 h-7 rounded-md "
-                    :class="{ 'bg-sky-400 text-white': !isDeleting, 'bg-gray-400': isDeleting }"
-                    v-if="!isEditing && !isDeleting" @click="toggleEdit()">
-                    <p>Editar</p>
+                <button @click="$emit('close')" type="button"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Cancelar
                 </button>
-                <button class="items-center w-20 h-7 rounded-md text-white bg-red-400" v-if="isEditing || isDeleting"
-                    @click="cancelChanges()">
-                    <p>Cancelar</p>
-                </button>
-                <button class="w-20 h-7  rounded-md"
-                    :class="{ 'bg-sky-400 text-white': isEditing || isDeleting, 'bg-gray-400': !isEditing && !isDeleting }"
-                    @click="isEditing ? saveChanges() : deleteRows()" :disabled="!isEditing && !isDeleting"
-                    v-if="isEditing || isDeleting">
-                    <p>Guardar</p>
-                </button>
-                <button class="w-20 h-7  rounded-md"
-                    :class="{ 'bg-sky-400 text-white': isEditing, 'bg-gray-400': !isEditing }" @click="createRow"
-                    :disabled="!isEditing">
-                    <p>Crear</p>
-                </button>
-
-
             </div>
 
+            <div class="flex">
+                <button class=" bg-blue-500 text-white rounded-full active:scale-95 mx-3 h-10 w-10 pb-1 "
+                    @click="currentPage = Math.max(1, currentPage - 1)">
+                    <Icon name="simple-line-icons:arrow-left" />
+                </button>
+                <button class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
+                    @click="currentPage = Math.min(Math.ceil(consulta.length / itemsPerPage), currentPage + 1)">
+                    <Icon name="simple-line-icons:arrow-right" />
+                </button>
+            </div>
+        </div>
 
-        </div>
-        <div class="flex  justify-center items-center mt-4">
-            <button @click="prevPage" class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
-                :disabled="currentPage <= 1">
-                <Icon name="simple-line-icons:arrow-left" />
-            </button>
-            <span>Página {{ currentPage }} de {{ totalPages }}</span>
-            <button @click="nextPage" class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
-                :disabled="currentPage >= totalPages">
-                <Icon name="simple-line-icons:arrow-right" />
-            </button>
-        </div>
+
+    </div>
+    <div class="flex  justify-center items-center mt-4">
+        <button @click="prevPage" class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
+            :disabled="currentPage <= 1">
+            <Icon name="simple-line-icons:arrow-left" />
+        </button>
+        <span>Página {{ currentPage }} de {{ totalPages }}</span>
+        <button @click="nextPage" class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
+            :disabled="currentPage >= totalPages">
+            <Icon name="simple-line-icons:arrow-right" />
+        </button>
+    </div>
     </div>
 </template>
 
@@ -189,6 +182,8 @@ export default {
             showModalField: '' as string,
             currentPage: 1,
             perPage: 18,
+            selectedId: null as number | null,
+            selectedRow: null as number | null,
             // ...
         }
     },
@@ -197,6 +192,10 @@ export default {
         rutaGet: {
             type: String,
             required: true,
+        },
+        showModal: {
+            type: Boolean,
+            required: true
         },
     },
 
