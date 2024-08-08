@@ -8,7 +8,7 @@
                 type="text" placeholder="Buscar" />
         </div> -->
         <ModalArticuloArtTarea :fkPadre=tareaId :showModal="showModalArticulos"
-            :rutaGet="'http://localhost:3333/lis_pre'" @close.native="showModalArticulos = false"
+            :rutaGet="'http://localhost:3333/lis_pre/buscador'" @close.native="showModalArticulos = false"
             @aceptar="updateRow" />
         <div class="flex flex-col" v-if="consulta && fieldSettings" :class="{ 'visible ': open, 'invisible ': !open }">
 
@@ -161,6 +161,14 @@ interface ArtTarea {
     total: number;
     subtotal: number;
     tareaId: number | null;
+    rubroId: string | null;
+    marcaId: string | null;
+    tipoId: string | null;
+    presentacionId: string | null;
+    uniMedPack: string | null;
+    canPack: number | null;
+    rendimiento: number | null;
+
 }
 
 import interact from 'interactjs';
@@ -274,7 +282,14 @@ export default {
                 subtotal: 0,
                 total: 0,
                 descuento: 1,
-                tareaId: this.tareaId // establecer tareaId igual a la tareaId de la primera fila
+                tareaId: this.tareaId,
+                rubroId: null,
+                marcaId: null,
+                tipoId: null,
+                presentacionId: null,
+                rendimiento: null,
+                uniMedPack: null,
+                canPack: null
             };
             this.consulta.push(newRow);
         },
@@ -477,8 +492,17 @@ export default {
                 selectedArtTarea.value.precioUnitario = newId.precioVenta;
                 selectedArtTarea.value.articuloNombre = newId.articuloNombre;
                 selectedArtTarea.value.descripcion = newId.articuloDescripcion;
-                selectedArtTarea.value.uniMedId = newId.articuloUniMed;
-                console.log('selectedArtTarea.Articulo ID: ', selectedArtTarea.value.articuloId);
+                selectedArtTarea.value.uniMedId = newId.articuloUniMedId;
+                selectedArtTarea.value.rubroId = newId.articuloRubroId;
+                selectedArtTarea.value.marcaId = newId.articuloMarcaId;
+                selectedArtTarea.value.tipoId = newId.articuloTipoId;
+                selectedArtTarea.value.presentacionId = newId.articuloPresentacionId;
+                selectedArtTarea.value.uniMedPack = newId.articuloUniMedPack;
+                selectedArtTarea.value.canPack = newId.articuloCanPack;
+                selectedArtTarea.value.rendimiento = newId.articuloRendimiento;
+
+                console.log('selectedArtTarea: ', selectedArtTarea.value);
+                console.log('newId: ', newId);
             } else {
                 console.error('Error al actualizar el Articulo ID');
             }

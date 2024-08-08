@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex flex-row-reverse h-14 px-7 justify-between items-center bg-orange-100 fixed top-0 left-0 right-0 shadow-lg z-10">
+        class="flex flex-row-reverse h-14 px-7 justify-between items-center bg-orange-100 fixed top-0 left-0 right-0 shadow-lg z-50">
 
         <div class="flex flex-row-reverse">
             <!-- <button>
@@ -9,9 +9,9 @@
             <button class="mr-6">
                 <a href="http://localhost:3000/Clientes">Clientes</a>
             </button>
-            <button class="mr-6">
+            <!-- <button class="mr-6">
                 <a href="http://localhost:3000/Personal">Personal</a>
-            </button>
+            </button> -->
             <div class="relative mr-6">
                 <button @click="toggleDropdown('menu1')"
                     class="inline-flex items-center px-2 py-1 group-active:bg-orange-50 rounded-md shadow-sm text-gray-700 focus:outline-none ">
@@ -46,20 +46,24 @@
                     @click.away="showDropdowns['menu2'] = false"
                     @keydown.escape.window="showDropdowns['menu2'] = false"> <a href="http://localhost:3000/Proveedores"
                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Proveedores</a>
+                    <a href="http://localhost:3000/precios-de-venta"
+                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Precios de venta</a>
                     <a href="http://localhost:3000/listas-de-precios"
-                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Listas de Precios</a>
+                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Listas de precios</a>
                 </div>
             </div>
         </div>
 
         <div class="flex">
 
-            <button class="mr-6">
+            <!-- <button class="mr-6">
                 <a href="http://localhost:3000/Dashboard">Dashboard</a>
-            </button>
+            </button> -->
 
             <div class="relative mr-6">
-                <button @click="toggleDropdown('menu3')"
+                <a href="http://localhost:3000/Obras" class="block px-4 py-2 text-sm text-gray-700 ">Obras</a>
+
+                <!-- <button @click="toggleDropdown('menu3')"
                     class="inline-flex items-center px-2 py-1 group-active:bg-orange-50 rounded-md shadow-sm text-gray-700 focus:outline-none ">
                     Obras
                     <Icon name="ic:baseline-arrow-drop-down" class=" iner pl-1 scale-150"></Icon>
@@ -67,7 +71,8 @@
                 <div v-if="showDropdowns['menu3']"
                     class="absolute left-0 z-10 mt-2 w-48 origin-top-right rounded-md shadow-lg bg-orange-50 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none"
                     @click.away="showDropdowns['menu3'] = false"
-                    @keydown.escape.window="showDropdowns['menu1'] = false"> <a href="http://localhost:3000/Obras"
+                    @keydown.escape.window="showDropdowns['menu1'] = false"> 
+                    <a href="http://localhost:3000/Obras"
                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Obras</a>
                     <a href="http://localhost:3000/Etapas"
                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Etapas</a>
@@ -78,7 +83,7 @@
                     <a href="http://localhost:3000/art-tareas"
                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Detalle Tareas</a>
 
-                </div>
+                </div> -->
             </div>
 
         </div>

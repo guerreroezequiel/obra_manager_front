@@ -1,6 +1,6 @@
 <template>
     <div class="fixed z-10 inset-0 overflow-y-auto" v-if="showModal">
-        <div v-if="consulta && fieldSettings" class="flex items-end justify-center min-h-screen text-center sm:block">
+        <div v-if="consulta" class="flex items-end justify-center min-h-screen text-center sm:block">
             <div class="fixed inset-0 transition-opacity" aria-hidden="true">
                 <div class="absolute inset-0 bg-gray-300 opacity-75"></div>
             </div>
@@ -98,6 +98,10 @@ interface ItemType {
     id: number;
 }
 
+interface currentItems {
+    id: number;
+}
+
 interface Campo {
     id: number;
     userId: number;
@@ -111,6 +115,7 @@ interface Campo {
     isHidden: number;
 }
 
+import interact from 'interactjs';
 import { ref, onMounted } from 'vue';
 
 export default {
@@ -119,25 +124,13 @@ export default {
             cellRefs: [] as any[],
             selectedId: null as number | null,
             selectedRow: null as number | null,
+            currentPage: 1,
             perPage: 10,
             // ...
         }
     },
 
-    props: {
-        rutaGet: {
-            type: String,
-            required: true,
-        },
-        showModal: {
-            type: Boolean,
-            required: true
-        },
-        fkPadre: {
-            type: Number,
-            required: true,
-        }
-    },
+
 
     computed: {
         //ordenar los campos por el orden
@@ -178,11 +171,23 @@ export default {
         },
     },
 
+    props: {
+        rutaGet: {
+            type: String,
+            required: true,
+        },
+        showModal: {
+            type: Boolean,
+            required: true
+        },
+
+    },
+
     setup(props, { emit }) {
         let consulta = ref([]);
         let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
-        let busqueda = ref('')
         let fieldSettings: Ref<Campo[]> = ref([]);
+        let busqueda = ref('')
         let campos = ref<string[]>([]); // Definir campos aquí
         let valores = ref<any[]>([]); // Definir valores aquí
         let currentPage = ref(1);
@@ -192,13 +197,12 @@ export default {
         const selectedRow = ref<ItemType | null>(null);
 
         const selectRow = (item: ItemType) => {
-            console.log('item: ', item);
             selectedId.value = item.id;
             selectedRow.value = item;
         };
 
         const aceptar = async () => {
-            console.log('selectedRow: ', selectedRow.value);
+            console.log('selectedRowRowModal:', selectedRow.value);
             if (selectedRow.value !== null) {
                 emit('aceptar', selectedRow.value);
                 console.log('selectedRowModal: ', selectedRow.value);
@@ -212,7 +216,10 @@ export default {
         });
 
         onMounted(async () => {
+            await refreshData();
+        });
 
+        const refreshData = async () => {
             console.log('rutaGet: ', props.rutaGet)
             const response = await fetch(props.rutaGet);
             if (response.ok) {
@@ -250,7 +257,7 @@ export default {
             } else {
                 console.error('HTTP-Error desde GRILLA: ' + response.status);
             }
-        })
+        }
 
         const aplicarBusqueda = async () => {
             const response = await fetch(props.rutaGet + '/' + busqueda.value);

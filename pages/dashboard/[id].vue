@@ -1,11 +1,5 @@
 <template>
     <main class="flex bg-gradient-to-r from-gray-100 to-orange-50">
-
-        <!-- MODALES -->
-        <!-- <DashForm :showModal="showModalEtapas" :rutaGet="'http://localhost:3333/etapas'"
-            @close="showModalEtapas = false" @aceptar="refreshData()" />
-        <DashForm :showModal="showModalModulos" :rutaGet="'http://localhost:3333/modulos'"
-            @close="showModalModulos = false" @aceptar="refreshData()" /> -->
         <ModalAgregar :showModal="showModalModulos" :rutaGet="'http://localhost:3333/models/modulos'"
             @close="showModalModulos = false" @aceptar="refreshData()" />
         <div>
@@ -25,6 +19,32 @@
             </div>
 
             <!-- El resto de tu plantilla -->
+            <div v-if="obra"
+                class="flex fixed top-14 z-10 w-screen h-10 px-5 items-center bg-orange-100 border-b border-r border-l border-orange-300 space-x-3">
+                <div class="flex items-center">
+                    <p class="text-2xl">Lote</p>
+                    <input v-model="obra.nombre" type="text" class="max-w-20 text-gray-700 m-2 text-2xl font-bold"
+                        :readonly="!isEditing"
+                        :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
+                </div>
+                <div class="flex items-center">
+                    <input v-if="isEditing" v-model="obra.medida" type="number"
+                        class="text-gray-700 m-2 text-2xl font-bold" :readonly="!isEditing"
+                        :size="obra.medida.toString().length > 0 ? obra.medida.toString().length : 1"
+                        :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
+                    <p v-else class="text-gray-700 m-2 text-2xl font-bold w-auto"> {{ obra.medida }}</p>
+
+                    <p class="font-semibold">m2</p>
+                </div>
+
+                <span class="flex text-lg">Subtotal: <p class="font-semibold">{{ formatPrice(obra.subtotal) }}</p>
+                </span>
+
+                <span class="flex text-lg">Descuento: <p class="font-semibold">{{ obra.descuento }}%</p></span>
+                <span class="flex text-lg">Total: <p class="font-semibold">{{ formatPrice(obra.total) }}</p></span>
+
+                <span class="flex text-lg">Cliente <p class="font-semibold">{{ obra.clienteId }}</p></span>
+            </div>
         </div>
         <!-- SIDENAV -->
         <div :class="{ 'w-96 ': sideNavOpen, 'w-0 ': !sideNavOpen }"
@@ -103,28 +123,9 @@
         <!-- DASHBOARD -->
         <!-- OBRA -->
         <div v-if="obra" class="flex flex-col w-full p-2 ml-10 mr-10 overflow-x-hidden">
-            <div
-                class="flex z-50 fixed top-2.5 rounded-3xl self-center h-10 px-5 items-center bg-orange-100 border-b border-r border-l border-orange-300 ">
-                <p class="text-2xl">Lote</p>
-                <input v-model="obra.nombre" type="text" class="max-w-20 text-gray-700 m-2 text-2xl font-bold"
-                    :readonly="!isEditing"
-                    :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
 
 
-                <input v-if="isEditing" v-model="obra.medida" type="number" class="text-gray-700 m-2 text-2xl font-bold"
-                    :readonly="!isEditing" :size="obra.medida.toString().length > 0 ? obra.medida.toString().length : 1"
-                    :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
-                <p v-else class="text-gray-700 m-2 text-2xl font-bold w-auto"> {{ obra.medida }}</p>
-
-                <p>m2</p>
-                <!-- 
-                <p>Subt: {{ formatPrice(obra.subtotal) }}</p>
-
-                <p>Descuento: {{ obra.descuento }}%</p>
-                <p>Total: {{ formatPrice(obra.total) }}</p> -->
-            </div>
-
-            <div class="flex flex-col flex-grow rounded-b-xl items-center justify-center mt-14">
+            <div class="flex flex-col flex-grow rounded-b-xl items-center justify-center mt-24">
                 <!-- etapa -->
                 <div class="flex flex-col w-full my-4 item-center justify-center shadow-lg border border-gray-300 px-2 pt-3 pb-2 rounded bg-white"
                     v-for="(etapa, etapaIndex) in computedEtapas(obra.id).value" :key="etapa.id"
@@ -133,7 +134,7 @@
                     <div class="flex flex-col border border-blue-600 rounded-md">
                         <div class="flex p-2 items-center justify-between">
                             <div class="flex items-center pb-1">
-                                <p class="text-lg font-medium">{{ etapa.id }}- </p>
+                                <p class="text-lg font-medium">{{ etapa.id }}- {{ etapa.new }} </p>
                                 <input v-model="etapa.nombre" type="text" class="text-gray-700 text-xl font-semibold"
                                     :readonly="!isEditing"
                                     :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
@@ -196,11 +197,8 @@
                                 <input v-model="modulo.descripcion" type="text" class="text-gray-700 text-lg"
                                     :readonly="!isEditing"
                                     :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
-
                             </div>
-
                         </div>
-
                         <!-- TAREAS -->
                         <div v-show="!modulo.tareaVisible" class="flex flex-col ">
                             <div class="flex flex-col border border-slate-300 my-0.5 bg-gray-50 rounded-md py-0.5 px-2"
@@ -373,14 +371,15 @@ interface Obra {
 }
 
 import { format, parseISO } from 'date-fns';
-import { is } from 'date-fns/locale';
 import { ref, onMounted } from 'vue';
 import SideNav from '~/components/SideNav.vue';
 
 export default {
+    name: 'dashboard',
     components: {
         SideNav
     },
+
     data() {
         return {
             table: 'obras',
@@ -417,7 +416,8 @@ export default {
 
     setup(props) {
 
-        let obra_index = ref(1)
+        const route = useRoute()
+        let obra_id = route.params.id
         let sideNavOpen = ref(false);
         let obra = ref<Obra | null>(null);
         let originalObra = ref(null);
@@ -452,9 +452,8 @@ export default {
 
         const computedEtapas = (obraId: number) => computed(() => {
             if (obra.value && obra.value.id === obraId) {
-                return obra.value.etapas.filter(etapa => !etapa.deleted);
+                return obra.value.etapas.filter(etapa => !etapa.deleted) || []
             }
-            return [];
         });
 
         const formatDate = (dateString: string) => {
@@ -532,7 +531,7 @@ export default {
             if (subtotalObra !== 0) { // Evitar división por cero
                 descuentoTotalObra = Math.round(((subtotalObra - totalObra) / subtotalObra) * 100 * 100) / 100; // Redondear a dos decimales
             }
-            console.log('descuentoTotalObra:', descuentoTotalObra, 'totalObra:', totalObra, 'subtotalObra:', subtotalObra);
+            // console.log('descuentoTotalObra:', descuentoTotalObra, 'totalObra:', totalObra, 'subtotalObra:', subtotalObra);
 
             // Actualizar el objeto obra con los nuevos valores calculados
             if (obra.value) {
@@ -602,6 +601,7 @@ export default {
             isEditing.value = true;
             // Actualizar modulos.value
             modulos.value = [...modulos.value, nuevoModulo];
+
         };
 
         //crear nueva etapa
@@ -625,12 +625,11 @@ export default {
                 new: true,
                 modulos: [],
             };
+
             if (obra.value) {
                 obra.value.etapas.push(nuevaEtapa);
             }
             isEditing.value = true;
-            // Actualizar etapas.value
-            etapas.value = [...etapas.value, nuevaEtapa];
         };
 
         const guardarTarea = (tarea: Tarea) => {
@@ -652,7 +651,8 @@ export default {
         async function refreshData() {
             isLoading.value = true; // Inicia el estado de carga
             try {
-                const response = await fetch(`http://localhost:3333/obras/1/full`);
+                const response = await fetch(`http://localhost:3333/obras/${obra_id}/full`);
+                // console.log('obra_id:', obra_id);
                 if (response.ok) {
                     const data = await response.json();
                     obra.value = data.obra;
@@ -750,19 +750,26 @@ export default {
             if (obra.value && originalObra.value) {
                 Object.keys(obra.value).forEach(key => {
                     if (obra.value && JSON.stringify(obra.value) !== JSON.stringify(originalObra.value)) {
-                        changedObra[obra.value.id] = obra.value;
+                        changedObra[obra.value.id] = {
+                            ...obra.value,
+                            subtotal: obra.value.subtotal,
+                            descuento: obra.value.descuento,
+                            total: obra.value.total
+                        };
                     }
                 });
             }
 
             // Para etapas
             if (etapas.value && originalEtapa.value) {
+                // Detectar etapas eliminadas
                 originalEtapa.value.forEach((item: any) => {
                     if (!etapas.value.find((etapa: any) => etapa.id === item.id)) {
                         deletedEtapas.push(item.id);
                     }
                 });
 
+                // Detectar etapas cambiadas
                 etapas.value.forEach((item: any, index: any) => {
                     if (!originalEtapa.value[index]) {
                         return;
@@ -797,69 +804,6 @@ export default {
                 });
             }
 
-            // Identificar y crear las etapas nuevas
-            async function enviarNuevasEtapas() {
-                console.log('etapas.value: ', etapas.value);
-                const newEtapas = etapas.value.filter((item) => item.new === true);
-                console.log('newEtapas: ', newEtapas);
-                for (const etapa of newEtapas) {
-                    const response = await fetch(`http://localhost:3333/etapas`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(etapa),
-                    });
-
-                    if (!response.ok) {
-                        console.error('Error al enviar la etapa: ', response.url);
-                    }
-                }
-            }
-            await enviarNuevasEtapas();
-
-            // Identificar y crear los módulos nuevos
-            async function enviarNuevosModulos() {
-                console.log('modulos.value: ', modulos.value);
-                const newModulos = modulos.value.filter((item) => item.new === true);
-                console.log('newModulos: ', newModulos);
-                for (const modulo of newModulos) {
-                    const response = await fetch(`http://localhost:3333/modulos`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(modulo),
-                    });
-
-                    if (!response.ok) {
-                        console.error('Error al enviar el módulo: ', response.url);
-                    }
-                }
-            }
-            await enviarNuevosModulos();
-
-            // Identificar las tareas nuevas
-            async function enviarNuevasTareas() {
-                const newTareas = tareas.value.filter((item) => item.new === true);
-                console.log('newTareas: ', newTareas);
-                // Crear las tareas nuevas en el servidor
-                for (const tarea of newTareas) {
-                    const response = await fetch(`http://localhost:3333/tareas`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(tarea),
-                    });
-
-                    if (!response.ok) {
-                        console.error('Error al enviar el elemento: ', response.url);
-                    }
-                }
-            }
-            await enviarNuevasTareas();
-
             // Para tareas
             if (tareas.value && originalTarea.value) {
                 originalTarea.value.forEach((item: any) => {
@@ -880,6 +824,67 @@ export default {
                     });
                 });
             }
+
+            // Identificar y crear las etapas nuevas
+            async function enviarNuevasEtapas() {
+                const newEtapas = etapas.value.filter((item) => item.new === true);
+
+                for (const etapa of newEtapas) {
+                    const response = await fetch(`http://localhost:3333/etapas`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(etapa),
+                    });
+
+                    if (!response.ok) {
+                        console.error('Error al enviar la etapa: ', response.url);
+                    }
+                }
+            }
+            await enviarNuevasEtapas();
+
+            // Identificar y crear los módulos nuevos
+            async function enviarNuevosModulos() {
+                const newModulos = modulos.value.filter((item) => item.new === true);
+
+                for (const modulo of newModulos) {
+                    const response = await fetch(`http://localhost:3333/modulos`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(modulo),
+                    });
+
+                    if (!response.ok) {
+                        console.error('Error al enviar el módulo: ', response.url);
+                    }
+                }
+            }
+            await enviarNuevosModulos();
+
+            // Identificar las tareas nuevas
+            async function enviarNuevasTareas() {
+                const newTareas = tareas.value.filter((item) => item.new === true);
+
+                // Crear las tareas nuevas en el servidor
+                for (const tarea of newTareas) {
+                    const response = await fetch(`http://localhost:3333/tareas`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(tarea),
+                    });
+
+                    if (!response.ok) {
+                        console.error('Error al enviar el elemento: ', response.url);
+                    }
+                }
+            }
+            await enviarNuevasTareas();
 
             // Guardar los cambios para etapas, modulos y tareas
             await saveChangedItems(changedObra, 'obras');
@@ -915,9 +920,8 @@ export default {
         }
 
         const deleteItems = async (deletedItems: string[], endpoint: string) => {
-            console.log('deletedItems: ', deletedItems);
+
             for (let id of deletedItems) {
-                console.log(`http://localhost:3333/${endpoint}/${id}`)
                 const response = await fetch(`http://localhost:3333/${endpoint}/${id}`, {
                     method: 'DELETE',
                     headers: {

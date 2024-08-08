@@ -32,7 +32,7 @@
                                     :class="{ 'resizable hover:border-blue-500': isEditing }"
                                     :style="{ width: field.width + 'px', minWidth: field.type === 'search' ? '80px' : 'auto' }"
                                     :data-field-name="field.fieldName" :data-index="index">
-                                    <p class="truncate p-1 select-none">{{ field.tag }}</p>
+                                    <p class="truncate p-1 select-none">{{ field.tag }} {{ field.width }}</p>
                                 </div>
                             </th>
                         </tr>
@@ -57,10 +57,10 @@
                                             class="bg-blue-200 px-2 rounded items-center justify-center">
                                             <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
                                         </button>
-                                        <ModalElegirId :showModal="showModalProveedores"
+                                        <!-- <ModalElegirIdV2 :showModal="showModalProveedores"
                                             :rutaGet="'http://localhost:3333/proveedores'"
                                             @close.native="showModalProveedores = false"
-                                            @aceptar="updateRow($event, 'proveedorId')" />
+                                            @aceptar="updateRow($event, 'proveedorId')" /> -->
                                         <ModalElegirId :showModal="showModalArticulos"
                                             :rutaGet="'http://localhost:3333/articulos'"
                                             @close.native="showModalArticulos = false"
@@ -291,7 +291,6 @@ export default {
             });
     },
 
-
     computed: {
         //ordenar los campos por el orden
         sortedFieldSettings() {
@@ -473,13 +472,13 @@ export default {
                 newPreLisIdName.value = ''; // Limpia el campo de entrada
 
                 // Recargar la lista de IDs
-                const responseLisPreIds = await fetch('http://localhost:3333/lis_pre_ids');
-                if (responseLisPreIds.ok) {
-                    lisPreIds.value = await responseLisPreIds.json();
-                    console.log('lisPreIds: ', lisPreIds.value);
-                } else {
-                    console.error('HTTP-Error: ' + responseLisPreIds.status);
-                }
+                // const responseLisPreIds = await fetch('http://localhost:3333/lis_pre_ids');
+                // if (responseLisPreIds.ok) {
+                //     lisPreIds.value = await responseLisPreIds.json();
+                //     console.log('lisPreIds: ', lisPreIds.value);
+                // } else {
+                //     console.error('HTTP-Error: ' + responseLisPreIds.status);
+                // }
             } catch (error) {
                 console.error('Error al agregar preLisId:', error);
                 // Manejo de errores
@@ -495,7 +494,7 @@ export default {
 
         async function refreshData() {
             // Recargar la consulta
-            console.log('rutaGet desde all lispre: ', props.rutaGet);
+            console.log('rutaGet desde all modal elegir id v2: ', props.rutaGet);
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
@@ -628,8 +627,6 @@ export default {
         const toggleEdit = async () => {
             if (!isEditing.value) {
                 originalConsulta.value = JSON.parse(JSON.stringify(consulta.value));
-
-                await updateFieldSettings();
             }
             isEditing.value = !isEditing.value;
             isDeleting.value = false;
@@ -753,7 +750,7 @@ export default {
 
             originalConsulta.value = [];
 
-            refreshData();
+            await refreshData();
         };
 
         return {

@@ -20,7 +20,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(item, index) in consulta" :key="index" @click="selectRow(item)">
+                        <tr v-for="(item, index) in paginatedItems" :key="index" @click="selectRow(item)">
                             <td v-if="isDeleting">
                                 <button @click.stop="deleteRowVisual(item)"
                                     class="text-blue-500 scale-125 px-1 pb-1.5 bg-transparent active:text-red-500">
@@ -34,7 +34,38 @@
                                             :value="nombres[`${field.fieldName}_${(item as any)[field.fieldName]}`]"
                                             :style="{ width: `50px` }"
                                             class="flex flex-grow focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md">
+                                        <button @click="selectRow(item), openModal(field.fieldName)"
+                                            :disabled="!isEditing"
+                                            class="bg-blue-200 px-2 rounded items-center justify-center">
+                                            <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
+                                        </button>
+                                        <!-- <ModalElegirIdV2 :showModal="showModalRubros"
+                                            :rutaGet="'http://localhost:3333/rubros'"
+                                            @close.native="showModalRubros = false"
+                                            @aceptar="updateRow($event, 'rubroId')" />
+                                        <ModalElegirIdV2 :showModal="showModalMarcas"
+                                            :rutaGet="'http://localhost:3333/marcas'"
+                                            @close.native="showModalMarcas = false"
+                                            @aceptar="updateRow($event, 'marcaId')" />
+                                        <ModalElegirIdV2 :showModal="showModalTipos"
+                                            :rutaGet="'http://localhost:3333/tipos'"
+                                            @close.native="showModalTipos = false"
+                                            @aceptar="updateRow($event, 'tipoId')" /> -->
                                     </div>
+                                    <select v-else-if="field.type === 'list'" class="flex flex-grow bg-white rounded"
+                                        :style="{ width: `50px` }" :disabled="!field.isEditable || !isEditing"
+                                        v-model="(item as any)[field.fieldName]"
+                                        :class="{ 'bg-slate-200': !field.isEditable && isEditing, 'focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md': true }">
+                                        <option v-for="(uniMed, index) in uniMeds"
+                                            v-if="field.fieldName === 'uniMedId' || field.fieldName === 'uniMedPack'"
+                                            :key="'uniMed-' + index" :value="uniMed">{{ uniMed }}</option>
+                                        <option v-for="(presentacion, index) in presentaciones"
+                                            v-else-if="field.fieldName === 'presentacionId'"
+                                            :key="'presentacion-' + index" :value="presentacion.id"
+                                            :selected="presentacion.id === (item as any)[field.fieldName]">
+                                            {{ presentacion.nombre }}
+                                        </option>
+                                    </select>
                                     <input v-else-if="field.type === 'check'" class="flex flex-grow"
                                         :style="{ width: `50px` }" type="checkbox"
                                         :disabled="!field.isEditable || !isEditing"
@@ -52,7 +83,9 @@
                     </tbody>
                 </table>
             </div>
+
         </div>
+
         <div class="flex justify-end mt-3 my-1 ">
             <div class="flex space-x-1 items-center ">
                 <button class="w-20 h-7 rounded-md"
@@ -86,14 +119,30 @@
 
 
         </div>
-
+        <div class="flex  justify-center items-center mt-4">
+            <button @click="prevPage" class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
+                :disabled="currentPage <= 1">
+                <Icon name="simple-line-icons:arrow-left" />
+            </button>
+            <span>Página {{ currentPage }} de {{ totalPages }}</span>
+            <button @click="nextPage" class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
+                :disabled="currentPage >= totalPages">
+                <Icon name="simple-line-icons:arrow-right" />
+            </button>
+        </div>
     </div>
 </template>
 
 <script lang="ts">
 
 interface ItemType {
-    id: string;
+    id: number;
+}
+
+interface NombreXid {
+    id: number;
+    nombre: string;
+
 }
 
 interface Campo {
@@ -109,21 +158,31 @@ interface Campo {
     isHidden: number;
 }
 
-interface Articulo {
-    id: string;
+interface Proveedor {
+    id: number;
     nombre: string;
+    mail: string | null;
+    tel: string | null;
+    habilitado: boolean | true;
+    direccion: string | null;
+    descripcion: string | null;
 }
 
 import interact from 'interactjs';
 import { ref, onMounted, watch } from 'vue';
+import { format, parseISO } from 'date-fns';
+import { ca } from 'date-fns/locale';
+import ModalElegirId from '../modal/ModalElegirId.vue';
 
 
 export default {
     data() {
         return {
-            headerRefs: [] as any[],
             cellRefs: [] as any[],
             nombres: {} as Record<string, string>,
+            showModalField: '' as string,
+            currentPage: 1,
+            perPage: 18,
             // ...
         }
     },
@@ -199,36 +258,152 @@ export default {
             return this.fieldSettings.sort((a, b) => a.order - b.order);
         },
 
+        totalPages() {
+            return Math.ceil(this.consulta.length / this.perPage);
+        },
+
+        paginatedItems() {
+            let start = (this.currentPage - 1) * this.perPage;
+            let end = start + this.perPage;
+            return this.consulta.slice(start, end);
+        },
+
 
     },
 
     methods: {
+
+        // Mostrar el modal para elegir un ID
+        showModal(field: string) {
+            this.showModalField = field;
+        },
+
         // Devuelve true si el campo es editable
         isFieldEditable(fieldName: any) {
             return this.fieldSettings[fieldName];
         },
 
+        nextPage() {
+            if (this.currentPage < this.totalPages) this.currentPage++;
+        },
+        prevPage() {
+            if (this.currentPage > 1) this.currentPage--;
+        },
+
         createRow() {
             // Crear un nuevo objeto ArtTarea con campos vacíos
             const newRow = {
-                id: '',
-                nombre: 'Nuevo rubro',
+                id: 0,
+                nombre: 'Nuevo articulo',
+                mail: '',
+                tel: '',
+                habilitado: true,
+                direccion: '',
+                descripcion: ''
             };
             this.consulta.push(newRow);
         },
 
+        // Obtener el nombre de un campo por su ID
+        // async fetchNombre(id: number, fieldName: string) {
+        //     if (id === null) {
+        //         console.error('ID es null');
+        //         return;
+        //     }
+
+        //     let url;
+        //     switch (fieldName) {
+        //         case 'rubroId':
+        //             url = `http://localhost:3333/rubros/${id}`;
+        //             break;
+        //         case 'marcaId':
+        //             url = `http://localhost:3333/marcas/${id}`;
+        //             break;
+        //         case 'tipoId':
+        //             url = `http://localhost:3333/tipos/${id}`;
+        //             break;
+        //         // Agrega más casos según sea necesario
+        //         default:
+        //             console.error('Nombre de campo no reconocido');
+        //             return;
+        //     }
+
+        //     const response = await fetch(url);
+        //     const data = await response.json();
+        //     this.nombres[`${fieldName}_${id}`] = data.nombre; // Usar una combinación de fieldName e id como clave
+        // },
+
+        openModal(fieldName: string) {
+            switch (fieldName) {
+                case 'rubroId':
+                    this.showModalRubros = true;
+                    break;
+                case 'marcaId':
+                    this.showModalMarcas = true;
+                    break;
+                case 'tipoId':
+                    this.showModalTipos = true;
+                    break;
+                default:
+                    console.error(`No se encontró un modal para el fieldName: ${fieldName}`);
+            }
+        },
     },
 
+    // Cargar los nombres de los campos al inicio
+    // created() {
+    //     for (let item of this.consulta) {
+    //         for (let field in item) {
+    //             if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') {
+    //                 if (item[field] !== null) {
+    //                     this.fetchNombre(item[field] as number, field);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // },
+
+    // Actualizar los nombres de los campos al cambiar la consulta
+    // watch: {
+    //     consulta: {
+    //         immediate: true,
+    //         handler(newValue) {
+    //             for (let item of newValue) {
+    //                 for (let field in item) {
+    //                     if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') {
+    //                         this.fetchNombre(item[field], field);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // },
+
     setup(props, { emit }) {
-        let consulta = ref<Articulo[]>([]);
+        let consulta = ref<Proveedor[]>([]);
         let open = ref(true);
-        let selected = ref<Articulo | null>(null); // Nueva variable para almacenar el objeto ArtTarea seleccionado
+        let selected = ref<Proveedor | null>(null); // Nueva variable para almacenar el objeto ArtTarea seleccionado
         let fieldSettings: Ref<Campo[]> = ref([]);
         let isEditing = ref(false);  // Nuevo estado
         let isDeleting = ref(false);  // Nuevo estado
+        let changedItems = ref<{ [key: string]: any }>({});
         let originalConsulta = ref([]);  // Nuevo estado
         let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
+        let tareaId = parseInt(new URL(props.rutaGet).pathname.split('/').pop() || '') || null;
         let deletedRows = ref<ItemType[]>([]);
+        let uniMeds = ref<string[]>([]);
+        let presentaciones = ref<NombreXid[]>([]);
+        const showModalArticulos = ref(false)
+        const showModalRubros = ref(false)
+        const showModalMarcas = ref(false)
+        const showModalTipos = ref(false)
+        const selectedId = ref<number | null>(null);
+
+
+        const formatDate = (dateString: string) => {
+            const date = parseISO(dateString);
+            return format(date, 'dd-MM-yyyy');
+        };
 
 
         async function refreshData() {
@@ -237,7 +412,7 @@ export default {
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/${tableProp}`);  // campos editables
+                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/proveedores`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -259,7 +434,12 @@ export default {
                 }
                 if (contentType && contentType.includes("application/json")) {
                     const data = await response.json();
-                    consulta.value = data
+                    consulta.value = data.map((item: { createdAt: string, updatedAt: string, habilitado: number, }) => ({
+                        ...item,
+                        createdAt: formatDate(item.createdAt),
+                        updatedAt: formatDate(item.updatedAt),
+                        habilitado: item.habilitado == 1 ? true : false,
+                    }));
                     console.log('consulta: ', consulta.value);
                 } else {
                     console.error('HTTP-Error desde GRILLA: La respuesta no es un JSON válido');
@@ -276,22 +456,43 @@ export default {
         onMounted(async () => {
             // Cargar la consulta
             refreshData();
+
+            // Cargar las unidades de medida
+            const responseUni = await fetch('http://localhost:3333/uni_meds');
+            const responsePre = await fetch('http://localhost:3333/presentacions');
+            if (responseUni.ok) {
+                uniMeds.value = await responseUni.json();
+                console.log('uniMeds: ', uniMeds.value);
+            } else {
+                console.error('HTTP-Error: ' + responseUni.status);
+            }
+            if (responsePre.ok) {
+                presentaciones.value = await responsePre.json();
+                console.log('uniMeds: ', presentaciones.value);
+            } else {
+                console.error('HTTP-Error: ' + responsePre.status);
+            }
         });
 
         //seleccionar una fila
-        const selectRow = (row: Articulo) => {
-            selected.value = row;
-            console.log('Row selected: ', row.id);
-            console.log('selectedArticulo: ', selected.value);
+        const selectRow = (row: Proveedor) => {
+            if (showModalRubros.value == false && showModalMarcas.value == false && showModalTipos.value == false) {
+                selected.value = row;
+
+                console.log('Row selected: ', row.id);
+                console.log('selectedArticulo: ', selected.value);
+            } else {
+                console.log('Row selected: rota ' + 'showModalRubros: ' + showModalRubros.value + 'showModalMarcas: ' + showModalMarcas.value + 'showModalTipos: ' + showModalTipos.value);
+            }
         };
 
         // eliminar una fila visualmente
-        const deleteRowVisual = (rowToDelete: Articulo) => {
+        const deleteRowVisual = (rowToDelete: Proveedor) => {
             const consultaCopy = [...consulta.value];
             const index = consultaCopy.findIndex(row => row.id === rowToDelete.id);
             if (index !== -1 && index < consultaCopy.length && consultaCopy[index]) {
                 // Agregar la fila a deletedRows antes de eliminarla visualmente
-                deletedRows.value.push({ id: consultaCopy[index].id as string });
+                deletedRows.value.push({ id: consultaCopy[index].id as number });
                 consulta.value = consulta.value.filter(row => row.id !== rowToDelete.id);
             }
         };
@@ -324,6 +525,30 @@ export default {
             refreshData();
         };
 
+        // Actualizar el ID de una fila seleccionada
+        // const updateRow = (newId: any, modalField: string) => {
+        //     if (selected.value !== null && newId !== undefined) {
+        //         switch (modalField) {
+        //             case 'rubroId':
+        //                 selected.value.rubroId = newId.id;
+        //                 console.log('selectedRowModal rubroId: ', selected.value.rubroId);
+        //                 break;
+        //             case 'marcaId':
+        //                 selected.value.marcaId = newId.id;
+        //                 console.log('selectedRowModal marcaId: ', selected.value.marcaId);
+        //                 break;
+        //             case 'tipoId':
+        //                 selected.value.tipoId = newId.id;
+        //                 console.log('selectedRowModal tipoId: ', selected.value.tipoId);
+        //                 break;
+        //             default:
+        //                 console.error(`No se encontró un campo para el modalField: ${modalField}`);
+        //         }
+        //         console.log('selectedRowModal ID: ', selected.value.id);
+        //     } else {
+        //         console.error('Error al actualizar el RowModal');
+        //     }
+        // };
 
         //  activar o desactivar el modo de edición
         const toggleEdit = async () => {
@@ -459,6 +684,9 @@ export default {
 
         return {
             consulta,
+            uniMeds,
+            presentaciones,
+            tareaId,
             open,
             fieldSettings,
             toggleEdit,
@@ -469,6 +697,11 @@ export default {
             saveChanges,
             deleteRows,
             tableProp,
+            showModalArticulos,
+            showModalRubros,
+            showModalMarcas,
+            showModalTipos,
+            // updateRow,
             selectRow,
             deleteRowVisual,
             selected,

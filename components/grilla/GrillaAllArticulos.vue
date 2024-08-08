@@ -39,16 +39,16 @@
                                             class="bg-blue-200 px-2 rounded items-center justify-center">
                                             <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
                                         </button>
-                                        <ModalElegirId :showModal="showModalRubros"
-                                            :rutaGet="'http://localhost:3333/rubroId'"
+                                        <ModalElegirIdV2 :showModal="showModalRubros"
+                                            :rutaGet="'http://localhost:3333/rubros'"
                                             @close.native="showModalRubros = false"
                                             @aceptar="updateRow($event, 'rubroId')" />
-                                        <ModalElegirId :showModal="showModalMarcas"
-                                            :rutaGet="'http://localhost:3333/marcaId'"
+                                        <ModalElegirIdV2 :showModal="showModalMarcas"
+                                            :rutaGet="'http://localhost:3333/marcas'"
                                             @close.native="showModalMarcas = false"
                                             @aceptar="updateRow($event, 'marcaId')" />
-                                        <ModalElegirId :showModal="showModalTipos"
-                                            :rutaGet="'http://localhost:3333/tipoId'"
+                                        <ModalElegirIdV2 :showModal="showModalTipos"
+                                            :rutaGet="'http://localhost:3333/tipos'"
                                             @close.native="showModalTipos = false"
                                             @aceptar="updateRow($event, 'tipoId')" />
                                     </div>
@@ -382,7 +382,7 @@ export default {
             handler(newValue) {
                 for (let item of newValue) {
                     for (let field in item) {
-                        if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') { // Añade más campos si es necesario
+                        if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') {
                             this.fetchNombre(item[field], field);
                         }
                     }

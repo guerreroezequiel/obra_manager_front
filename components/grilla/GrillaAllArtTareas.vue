@@ -305,7 +305,7 @@ export default {
             }
             // Utiliza toLocaleString para formatear el precio en el formato local deseado
             return numericPrice.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-        }
+        },
 
     },
 
