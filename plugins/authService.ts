@@ -1,4 +1,16 @@
+// plugins/authService.ts
+import { defineNuxtPlugin, useNuxtApp } from 'nuxt/app';
+
+interface Cookies {
+    get: (name: string) => string | undefined;
+    set: (name: string, value: string, options?: any) => void;
+    remove: (name: string) => void;
+}
+
 export default defineNuxtPlugin(() => {
+    const { $cookies } = useNuxtApp();
+    const cookies = $cookies as unknown as Cookies;
+
     const login = async (username: string, password: string) => {
         try {
             const response = await fetch('http://localhost:3333/login', {
@@ -15,7 +27,7 @@ export default defineNuxtPlugin(() => {
 
             const data = await response.json();
             const token = data.token;
-            localStorage.setItem('authToken', token);
+            cookies.set('authToken', token, { path: '/', maxAge: 60 * 60 }); // 1 hora
             return token;
         } catch (error) {
             console.error('Login failed:', error);
@@ -24,11 +36,11 @@ export default defineNuxtPlugin(() => {
     };
 
     const getToken = () => {
-        return localStorage.getItem('authToken');
+        return cookies.get('authToken');
     };
 
     const logout = () => {
-        localStorage.removeItem('authToken');
+        cookies.remove('authToken');
     };
 
     return {

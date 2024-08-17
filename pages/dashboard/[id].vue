@@ -379,6 +379,7 @@ export default {
     components: {
         SideNav
     },
+    middleware: 'auth', // Aplica el middleware de autenticación
 
     data() {
         return {

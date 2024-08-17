@@ -24,10 +24,12 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useCookie } from '#app';
 
 const email = ref('')
 const password = ref('')
 const router = useRouter()
+const authToken = useCookie('authToken');
 
 const login = async () => {
     try {
@@ -48,7 +50,7 @@ const login = async () => {
 
         const data = await response.json();
         const token = data.token;
-        localStorage.setItem('authToken', token);
+        authToken.value = token; // Guardar el token en la cookie
         router.push('/obras');
     } catch (error) {
         console.error('Login failed:', error);
