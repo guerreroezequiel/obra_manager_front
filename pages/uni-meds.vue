@@ -5,3 +5,9 @@
         <GrillaAllUniMeds rutaGet="http://localhost:3333/uni_medsAll" />
     </main>
 </template>
+
+<script>
+definePageMeta({
+    middleware: 'auth'
+});
+</script>

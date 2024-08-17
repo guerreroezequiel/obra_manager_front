@@ -23,7 +23,7 @@
                 class="flex fixed top-14 z-10 w-screen h-10 px-5 items-center bg-orange-100 border-b border-r border-l border-orange-300 space-x-3">
                 <div class="flex items-center">
                     <p class="text-2xl">Lote</p>
-                    <input v-model="obra.nombre" type="text" class="max-w-20 text-gray-700 m-2 text-2xl font-bold"
+                    <input v-model="obra.codigo" type="text" class="max-w-20 text-gray-700 m-2 text-2xl font-bold"
                         :readonly="!isEditing"
                         :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
                 </div>
@@ -90,7 +90,7 @@
                 <div class="ml-5" v-if="obra" v-show="sideNavOpen">
                     <ul>
                         <li class="p-4">
-                            <a href="#" class="p-4 truncate" @click="scrollToElement(`obra-${obra.id}`)">{{ obra.nombre
+                            <a href="#" class="p-4 truncate" @click="scrollToElement(`obra-${obra.id}`)">{{ obra.codigo
                                 }}</a>
                             <ul>
                                 <li class="p-4 " v-for="etapa in obra.etapas" :key="etapa.id">
@@ -248,7 +248,7 @@
 
                                     <!-- ART_TAREAS -->
                                     <div v-if="tarea.artTareasVisible" class="mt-4">
-                                        <GrillaArtTareasCopia :rutaGet='rutaGet' :medida="Number(obra.medida)"
+                                        <GrillaArtTareasV2 :rutaGet='rutaGet' :medida="Number(obra.medida)"
                                             @changesSaved="handleChangesSaved(tarea, $event)" />
                                     </div>
                                 </div>
@@ -354,7 +354,7 @@ interface Etapa {
 
 interface Obra {
     id: number;
-    nombre: string;
+    codigo: string;
     descripcion: string;
     medida: number;
     clienteId: number;
@@ -373,6 +373,11 @@ interface Obra {
 import { format, parseISO } from 'date-fns';
 import { ref, onMounted } from 'vue';
 import SideNav from '~/components/SideNav.vue';
+
+definePageMeta({
+    middleware: 'auth'
+});
+
 
 export default {
     name: 'dashboard',

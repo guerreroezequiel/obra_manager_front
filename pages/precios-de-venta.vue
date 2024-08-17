@@ -9,7 +9,9 @@
 <script lang="ts">
 import GrillaAllLisPreV2 from '~/components/grilla/GrillaAllLisPreV2.vue';
 
-
+definePageMeta({
+    middleware: 'auth'
+});
 
 
 </script>

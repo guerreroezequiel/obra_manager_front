@@ -9,7 +9,9 @@
 <script lang="ts">
 import GrillaAllRubros from '~/components/grilla/GrillaAllRubros.vue';
 
-
+definePageMeta({
+    middleware: 'auth'
+});
 
 
 </script>

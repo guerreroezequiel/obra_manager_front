@@ -11,6 +11,8 @@
 import GrillaAllArticulos from '~/components/grilla/GrillaAllArticulos.vue';
 
 
-
+definePageMeta({
+    middleware: 'auth'
+});
 
 </script>

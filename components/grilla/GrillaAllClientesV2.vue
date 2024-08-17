@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col p-2 rounded-lg fixed z-10 inset-0 overflow-y-auto" v-if="showModal">
+    <div class="flex flex-col p-2 rounded-lg">
 
         <div class="flex flex-col" v-if="consulta && fieldSettings" :class="{ 'visible ': open, 'invisible ': !open }">
 
@@ -39,18 +39,18 @@
                                             class="bg-blue-200 px-2 rounded items-center justify-center">
                                             <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
                                         </button>
-                                        <ModalElegirId :showModal="showModalRubros"
-                                            :rutaGet="'http://localhost:3333/rubroId'"
+                                        <!-- <ModalElegirIdV2 :showModal="showModalRubros"
+                                            :rutaGet="'http://localhost:3333/rubros'"
                                             @close.native="showModalRubros = false"
                                             @aceptar="updateRow($event, 'rubroId')" />
-                                        <ModalElegirId :showModal="showModalMarcas"
-                                            :rutaGet="'http://localhost:3333/marcaId'"
+                                        <ModalElegirIdV2 :showModal="showModalMarcas"
+                                            :rutaGet="'http://localhost:3333/marcas'"
                                             @close.native="showModalMarcas = false"
                                             @aceptar="updateRow($event, 'marcaId')" />
-                                        <ModalElegirId :showModal="showModalTipos"
-                                            :rutaGet="'http://localhost:3333/tipoId'"
+                                        <ModalElegirIdV2 :showModal="showModalTipos"
+                                            :rutaGet="'http://localhost:3333/tipos'"
                                             @close.native="showModalTipos = false"
-                                            @aceptar="updateRow($event, 'tipoId')" />
+                                            @aceptar="updateRow($event, 'tipoId')" /> -->
                                     </div>
                                     <select v-else-if="field.type === 'list'" class="flex flex-grow bg-white rounded"
                                         :style="{ width: `50px` }" :disabled="!field.isEditable || !isEditing"
@@ -87,42 +87,49 @@
         </div>
 
         <div class="flex justify-end mt-3 my-1 ">
-            <div class="flex flex-row-reverse absolute right-6">
-                <button type="button" @click="aceptar(); $emit('close');"
-                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
-                    Aceptar
+            <div class="flex space-x-1 items-center ">
+                <button class="w-20 h-7 rounded-md"
+                    :class="{ 'bg-sky-400 text-white': !isEditing, 'bg-gray-400': isEditing }"
+                    v-if="!isEditing && !isDeleting" @click="toggleDelete()">
+                    <p>Eliminar</p>
                 </button>
-                <button @click="$emit('close')" type="button"
-                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                    Cancelar
+                <button class="items-center w-20 h-7 rounded-md "
+                    :class="{ 'bg-sky-400 text-white': !isDeleting, 'bg-gray-400': isDeleting }"
+                    v-if="!isEditing && !isDeleting" @click="toggleEdit()">
+                    <p>Editar</p>
                 </button>
+                <button class="items-center w-20 h-7 rounded-md text-white bg-red-400" v-if="isEditing || isDeleting"
+                    @click="cancelChanges()">
+                    <p>Cancelar</p>
+                </button>
+                <button class="w-20 h-7  rounded-md"
+                    :class="{ 'bg-sky-400 text-white': isEditing || isDeleting, 'bg-gray-400': !isEditing && !isDeleting }"
+                    @click="isEditing ? saveChanges() : deleteRows()" :disabled="!isEditing && !isDeleting"
+                    v-if="isEditing || isDeleting">
+                    <p>Guardar</p>
+                </button>
+                <button class="w-20 h-7  rounded-md"
+                    :class="{ 'bg-sky-400 text-white': isEditing, 'bg-gray-400': !isEditing }" @click="createRow"
+                    :disabled="!isEditing">
+                    <p>Crear</p>
+                </button>
+
+
             </div>
 
-            <div class="flex">
-                <button class=" bg-blue-500 text-white rounded-full active:scale-95 mx-3 h-10 w-10 pb-1 "
-                    @click="currentPage = Math.max(1, currentPage - 1)">
-                    <Icon name="simple-line-icons:arrow-left" />
-                </button>
-                <button class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
-                    @click="currentPage = Math.min(Math.ceil(consulta.length / itemsPerPage), currentPage + 1)">
-                    <Icon name="simple-line-icons:arrow-right" />
-                </button>
-            </div>
+
         </div>
-
-
-    </div>
-    <div class="flex  justify-center items-center mt-4">
-        <button @click="prevPage" class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
-            :disabled="currentPage <= 1">
-            <Icon name="simple-line-icons:arrow-left" />
-        </button>
-        <span>Página {{ currentPage }} de {{ totalPages }}</span>
-        <button @click="nextPage" class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
-            :disabled="currentPage >= totalPages">
-            <Icon name="simple-line-icons:arrow-right" />
-        </button>
-    </div>
+        <div class="flex  justify-center items-center mt-4">
+            <button @click="prevPage" class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
+                :disabled="currentPage <= 1">
+                <Icon name="simple-line-icons:arrow-left" />
+            </button>
+            <span>Página {{ currentPage }} de {{ totalPages }}</span>
+            <button @click="nextPage" class=" bg-blue-500 text-white rounded-full  active:scale-95 mx-3 h-10 w-10 pb-1 "
+                :disabled="currentPage >= totalPages">
+                <Icon name="simple-line-icons:arrow-right" />
+            </button>
+        </div>
     </div>
 </template>
 
@@ -151,20 +158,14 @@ interface Campo {
     isHidden: number;
 }
 
-interface Articulo {
+interface Cliente {
     id: number;
     nombre: string;
+    mail: string | null;
+    tel: string | null;
+    habilitado: boolean | true;
+    direccion: string | null;
     descripcion: string | null;
-    canPack: number | null;
-    rendimiento: number | null;
-    tipoId: number | null;
-    rubroId: number | null;
-    marcaId: number | null;
-    presentacionId: number | null;
-    habilitado: boolean | null;
-    uniMedId: string;
-    uniMedPack: string;
-    estado: number | null;
 }
 
 import interact from 'interactjs';
@@ -182,8 +183,6 @@ export default {
             showModalField: '' as string,
             currentPage: 1,
             perPage: 18,
-            selectedId: null as number | null,
-            selectedRow: null as number | null,
             // ...
         }
     },
@@ -192,10 +191,6 @@ export default {
         rutaGet: {
             type: String,
             required: true,
-        },
-        showModal: {
-            type: Boolean,
-            required: true
         },
     },
 
@@ -300,49 +295,43 @@ export default {
             const newRow = {
                 id: 0,
                 nombre: 'Nuevo articulo',
-                descripcion: 'Descripcion de nuevo articulo',
-                canPack: 0,
-                rendimiento: 0,
-                tipoId: 1,
-                rubroId: 1,
-                marcaId: 1,
-                presentacionId: 1,
+                mail: '',
+                tel: '',
                 habilitado: true,
-                uniMedId: 'mts',
-                uniMedPack: 'mts',
-                estado: 1,
+                direccion: '',
+                descripcion: ''
             };
             this.consulta.push(newRow);
         },
 
         // Obtener el nombre de un campo por su ID
-        async fetchNombre(id: number, fieldName: string) {
-            if (id === null) {
-                console.error('ID es null');
-                return;
-            }
+        // async fetchNombre(id: number, fieldName: string) {
+        //     if (id === null) {
+        //         console.error('ID es null');
+        //         return;
+        //     }
 
-            let url;
-            switch (fieldName) {
-                case 'rubroId':
-                    url = `http://localhost:3333/rubros/${id}`;
-                    break;
-                case 'marcaId':
-                    url = `http://localhost:3333/marcas/${id}`;
-                    break;
-                case 'tipoId':
-                    url = `http://localhost:3333/tipos/${id}`;
-                    break;
-                // Agrega más casos según sea necesario
-                default:
-                    console.error('Nombre de campo no reconocido');
-                    return;
-            }
+        //     let url;
+        //     switch (fieldName) {
+        //         case 'rubroId':
+        //             url = `http://localhost:3333/rubros/${id}`;
+        //             break;
+        //         case 'marcaId':
+        //             url = `http://localhost:3333/marcas/${id}`;
+        //             break;
+        //         case 'tipoId':
+        //             url = `http://localhost:3333/tipos/${id}`;
+        //             break;
+        //         // Agrega más casos según sea necesario
+        //         default:
+        //             console.error('Nombre de campo no reconocido');
+        //             return;
+        //     }
 
-            const response = await fetch(url);
-            const data = await response.json();
-            this.nombres[`${fieldName}_${id}`] = data.nombre; // Usar una combinación de fieldName e id como clave
-        },
+        //     const response = await fetch(url);
+        //     const data = await response.json();
+        //     this.nombres[`${fieldName}_${id}`] = data.nombre; // Usar una combinación de fieldName e id como clave
+        // },
 
         openModal(fieldName: string) {
             switch (fieldName) {
@@ -362,38 +351,38 @@ export default {
     },
 
     // Cargar los nombres de los campos al inicio
-    created() {
-        for (let item of this.consulta) {
-            for (let field in item) {
-                if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') {
-                    if (item[field] !== null) {
-                        this.fetchNombre(item[field] as number, field);
-                    }
-                }
-            }
-        }
-    },
+    // created() {
+    //     for (let item of this.consulta) {
+    //         for (let field in item) {
+    //             if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') {
+    //                 if (item[field] !== null) {
+    //                     this.fetchNombre(item[field] as number, field);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // },
 
     // Actualizar los nombres de los campos al cambiar la consulta
-    watch: {
-        consulta: {
-            immediate: true,
-            handler(newValue) {
-                for (let item of newValue) {
-                    for (let field in item) {
-                        if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') { // Añade más campos si es necesario
-                            this.fetchNombre(item[field], field);
-                        }
-                    }
-                }
-            }
-        }
-    },
+    // watch: {
+    //     consulta: {
+    //         immediate: true,
+    //         handler(newValue) {
+    //             for (let item of newValue) {
+    //                 for (let field in item) {
+    //                     if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') {
+    //                         this.fetchNombre(item[field], field);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // },
 
     setup(props, { emit }) {
-        let consulta = ref<Articulo[]>([]);
+        let consulta = ref<Cliente[]>([]);
         let open = ref(true);
-        let selected = ref<Articulo | null>(null); // Nueva variable para almacenar el objeto ArtTarea seleccionado
+        let selected = ref<Cliente | null>(null); // Nueva variable para almacenar el objeto ArtTarea seleccionado
         let fieldSettings: Ref<Campo[]> = ref([]);
         let isEditing = ref(false);  // Nuevo estado
         let isDeleting = ref(false);  // Nuevo estado
@@ -423,7 +412,7 @@ export default {
             const response = await fetch(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/articulos`);  // campos editables
+                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/proveedores`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -486,7 +475,7 @@ export default {
         });
 
         //seleccionar una fila
-        const selectRow = (row: Articulo) => {
+        const selectRow = (row: Cliente) => {
             if (showModalRubros.value == false && showModalMarcas.value == false && showModalTipos.value == false) {
                 selected.value = row;
 
@@ -498,7 +487,7 @@ export default {
         };
 
         // eliminar una fila visualmente
-        const deleteRowVisual = (rowToDelete: Articulo) => {
+        const deleteRowVisual = (rowToDelete: Cliente) => {
             const consultaCopy = [...consulta.value];
             const index = consultaCopy.findIndex(row => row.id === rowToDelete.id);
             if (index !== -1 && index < consultaCopy.length && consultaCopy[index]) {
@@ -537,29 +526,29 @@ export default {
         };
 
         // Actualizar el ID de una fila seleccionada
-        const updateRow = (newId: any, modalField: string) => {
-            if (selected.value !== null && newId !== undefined) {
-                switch (modalField) {
-                    case 'rubroId':
-                        selected.value.rubroId = newId.id;
-                        console.log('selectedRowModal rubroId: ', selected.value.rubroId);
-                        break;
-                    case 'marcaId':
-                        selected.value.marcaId = newId.id;
-                        console.log('selectedRowModal marcaId: ', selected.value.marcaId);
-                        break;
-                    case 'tipoId':
-                        selected.value.tipoId = newId.id;
-                        console.log('selectedRowModal tipoId: ', selected.value.tipoId);
-                        break;
-                    default:
-                        console.error(`No se encontró un campo para el modalField: ${modalField}`);
-                }
-                console.log('selectedRowModal ID: ', selected.value.id);
-            } else {
-                console.error('Error al actualizar el RowModal');
-            }
-        };
+        // const updateRow = (newId: any, modalField: string) => {
+        //     if (selected.value !== null && newId !== undefined) {
+        //         switch (modalField) {
+        //             case 'rubroId':
+        //                 selected.value.rubroId = newId.id;
+        //                 console.log('selectedRowModal rubroId: ', selected.value.rubroId);
+        //                 break;
+        //             case 'marcaId':
+        //                 selected.value.marcaId = newId.id;
+        //                 console.log('selectedRowModal marcaId: ', selected.value.marcaId);
+        //                 break;
+        //             case 'tipoId':
+        //                 selected.value.tipoId = newId.id;
+        //                 console.log('selectedRowModal tipoId: ', selected.value.tipoId);
+        //                 break;
+        //             default:
+        //                 console.error(`No se encontró un campo para el modalField: ${modalField}`);
+        //         }
+        //         console.log('selectedRowModal ID: ', selected.value.id);
+        //     } else {
+        //         console.error('Error al actualizar el RowModal');
+        //     }
+        // };
 
         //  activar o desactivar el modo de edición
         const toggleEdit = async () => {
@@ -712,7 +701,7 @@ export default {
             showModalRubros,
             showModalMarcas,
             showModalTipos,
-            updateRow,
+            // updateRow,
             selectRow,
             deleteRowVisual,
             selected,

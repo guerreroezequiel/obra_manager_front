@@ -168,7 +168,6 @@ interface ArtTarea {
     uniMedPack: string | null;
     canPack: number | null;
     rendimiento: number | null;
-
 }
 
 import interact from 'interactjs';

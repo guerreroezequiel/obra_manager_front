@@ -5,3 +5,8 @@
         <GrillaAllRubros rutaGet="http://localhost:3333/presentacions" />
     </main>
 </template>
+<script>
+definePageMeta({
+    middleware: 'auth'
+});
+</script>

@@ -5,3 +5,9 @@
         <GrillaAllRubros rutaGet="http://localhost:3333/marcas" />
     </main>
 </template>
+
+<script>
+definePageMeta({
+    middleware: 'auth'
+});
+</script>

@@ -9,7 +9,9 @@
 <script lang="ts">
 import GrillaAllArtTareas from '~/components/grilla/GrillaAllArtTareas.vue';
 
-
+definePageMeta({
+    middleware: 'auth'
+});
 
 
 

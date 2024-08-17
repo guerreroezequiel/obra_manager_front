@@ -40,26 +40,18 @@ const login = async () => {
                 email: email.value,
                 password: password.value
             })
-        })
+        });
 
         if (!response.ok) {
-            throw new Error('Error en la solicitud')
+            throw new Error('Login failed');
         }
 
-        const data = await response.json()
-        console.log(data)
-
-        // Guarda el token en el almacenamiento local o en una cookie
-        localStorage.setItem('authToken', data.token.token)
-
-        // Redirige a la página principal o a donde necesites
-        router.push('/')
+        const data = await response.json();
+        const token = data.token;
+        localStorage.setItem('authToken', token);
+        router.push('/obras');
     } catch (error) {
-        console.error('Error en el login:', error)
+        console.error('Login failed:', error);
     }
 }
 </script>
-
-<style scoped>
-/* Puedes agregar estilos adicionales aquí si es necesario */
-</style>

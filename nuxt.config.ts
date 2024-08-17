@@ -4,6 +4,7 @@ export default defineNuxtConfig({
   pages: true,
   modules: ['@nuxtjs/tailwindcss', 'nuxt-icon'],
 
+
   // agregar proxy para evitar CORS
 
   runtimeConfig: {
