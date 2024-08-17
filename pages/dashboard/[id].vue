@@ -374,11 +374,6 @@ import { format, parseISO } from 'date-fns';
 import { ref, onMounted } from 'vue';
 import SideNav from '~/components/SideNav.vue';
 
-definePageMeta({
-    middleware: 'auth'
-});
-
-
 export default {
     name: 'dashboard',
     components: {
