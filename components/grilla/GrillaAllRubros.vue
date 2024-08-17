@@ -229,15 +229,16 @@ export default {
         let originalConsulta = ref([]);  // Nuevo estado
         let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
         let deletedRows = ref<ItemType[]>([]);
+        const { $auth } = useNuxtApp();
 
 
         async function refreshData() {
             // Recargar la consulta
             console.log('rutaGet desde all articulos: ', props.rutaGet);
-            const response = await fetch(props.rutaGet);
+            const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/${tableProp}`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/${tableProp}`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -303,7 +304,7 @@ export default {
             for (let row of deletedRows.value) {
                 console.log(`http://localhost:3333/${tableProp}/${row.id}`)
                 try {
-                    const response = await fetch(`http://localhost:3333/${tableProp}/${row.id}`, {
+                    const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${row.id}`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
@@ -359,7 +360,7 @@ export default {
                 const url = `http://localhost:3333/user_field_settings/${userId}/${fieldId}`;
 
                 try {
-                    const response = await fetch(url, {
+                    const response = await $auth.fetchWithAuth(url, {
                         method: 'PUT', // o 'PATCH'
                         headers: {
                             'Content-Type': 'application/json',
@@ -416,7 +417,7 @@ export default {
             for (let id in itemsToUpdate) {
                 console.log('id: ', id, 'itemsToUpdate: ', itemsToUpdate[id]);
                 const item = itemsToUpdate[id];
-                const response = await fetch(`http://localhost:3333/${tableProp}/${id}`, {
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${id}`, {
                     method: 'PUT', // 
                     headers: {
                         'Content-Type': 'application/json'
@@ -432,7 +433,7 @@ export default {
             //crear nuevos elementos
             for (let item of itemsToCreate) {
                 console.log('Creating item: ', item);
-                const response = await fetch(`http://localhost:3333/${tableProp}`, {
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

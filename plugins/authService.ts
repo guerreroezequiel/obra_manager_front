@@ -1,24 +1,19 @@
 // plugins/authService.ts
 import { defineNuxtPlugin, useNuxtApp } from 'nuxt/app';
 
-interface Cookies {
-    get: (name: string) => string | undefined;
-    set: (name: string, value: string, options?: any) => void;
-    remove: (name: string) => void;
-}
 
 export default defineNuxtPlugin(() => {
-    const { $cookies } = useNuxtApp();
-    const cookies = $cookies as unknown as Cookies;
-
-    const login = async (username: string, password: string) => {
+    const authCookie = useCookie("authToken", {
+        maxAge: 60 * 60
+    })
+    const login = async (email: string, password: string) => {
         try {
             const response = await fetch('http://localhost:3333/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ email, password })
             });
 
             if (!response.ok) {
@@ -26,29 +21,45 @@ export default defineNuxtPlugin(() => {
             }
 
             const data = await response.json();
-            const token = data.token;
-            cookies.set('authToken', token, { path: '/', maxAge: 60 * 60 }); // 1 hora
-            return token;
+            const token = data?.token?.token;
+            if (!token) {
+                throw new Error('Login failed')
+            }
+
+            authCookie.value = token
+            return true
         } catch (error) {
             console.error('Login failed:', error);
-            throw error;
+            return false
         }
+    };
+    const logout = () => {
+        authCookie.value = null
     };
 
     const getToken = () => {
-        return cookies.get('authToken');
-    };
+        return authCookie.value
+    }
 
-    const logout = () => {
-        cookies.remove('authToken');
-    };
+    const fetchWithAuth = (url: any, options = {} as any) => {
+        const optionsWithAuth = {
+            ...options,
+            headers: {
+                ...options.headers,
+                'Authorization': `Bearer ${authCookie.value}`,
+            },
+        };
+
+        return fetch(url, optionsWithAuth);
+    }
 
     return {
         provide: {
             auth: {
                 login,
+                logout,
                 getToken,
-                logout
+                fetchWithAuth
             }
         }
     };

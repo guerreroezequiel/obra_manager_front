@@ -25,6 +25,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCookie } from '#app';
+const { $auth } = useNuxtApp();
 
 const email = ref('')
 const password = ref('')
@@ -32,28 +33,9 @@ const router = useRouter()
 const authToken = useCookie('authToken');
 
 const login = async () => {
-    try {
-        const response = await fetch('http://localhost:3333/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                email: email.value,
-                password: password.value
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Login failed');
-        }
-
-        const data = await response.json();
-        const token = data.token;
-        authToken.value = token; // Guardar el token en la cookie
+    const result = await $auth.login(email.value, password.value);
+    if (result) {
         router.push('/obras');
-    } catch (error) {
-        console.error('Login failed:', error);
     }
 }
 </script>
