@@ -339,8 +339,8 @@ export default {
                     console.error('Nombre de campo no reconocido');
                     return;
             }
-
-            const response = await fetch(url);
+            const { $auth } = useNuxtApp();
+            const response = await $auth.fetchWithAuth(url);
             const data = await response.json();
             this.nombres[`${fieldName}_${id}`] = data.nombre; // Usar una combinación de fieldName e id como clave
         },
@@ -410,6 +410,9 @@ export default {
         const showModalMarcas = ref(false)
         const showModalTipos = ref(false)
         const selectedId = ref<number | null>(null);
+        const { $auth } = useNuxtApp();
+        const config = useRuntimeConfig()
+        const apiUrl = config.apiUrl
 
 
         const formatDate = (dateString: string) => {
@@ -421,10 +424,10 @@ export default {
         async function refreshData() {
             // Recargar la consulta
             console.log('rutaGet desde all articulos: ', props.rutaGet);
-            const response = await fetch(props.rutaGet);
+            const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/articulos`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/articulos`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -470,8 +473,8 @@ export default {
             refreshData();
 
             // Cargar las unidades de medida
-            const responseUni = await fetch('http://localhost:3333/uni_meds');
-            const responsePre = await fetch('http://localhost:3333/presentacions');
+            const responseUni = await $auth.fetchWithAuth('http://localhost:3333/uni_meds');
+            const responsePre = await $auth.fetchWithAuth('http://localhost:3333/presentacions');
             if (responseUni.ok) {
                 uniMeds.value = await responseUni.json();
                 console.log('uniMeds: ', uniMeds.value);
@@ -516,7 +519,7 @@ export default {
             for (let row of deletedRows.value) {
                 console.log(`http://localhost:3333/${tableProp}/${row.id}`)
                 try {
-                    const response = await fetch(`http://localhost:3333/${tableProp}/${row.id}`, {
+                    const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${row.id}`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
@@ -596,7 +599,7 @@ export default {
                 const url = `http://localhost:3333/user_field_settings/${userId}/${fieldId}`;
 
                 try {
-                    const response = await fetch(url, {
+                    const response = await $auth.fetchWithAuth(url, {
                         method: 'PUT', // o 'PATCH'
                         headers: {
                             'Content-Type': 'application/json',
@@ -653,7 +656,7 @@ export default {
             for (let id in itemsToUpdate) {
                 console.log('id: ', id, 'itemsToUpdate: ', itemsToUpdate[id]);
                 const item = itemsToUpdate[id];
-                const response = await fetch(`http://localhost:3333/${tableProp}/${id}`, {
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${id}`, {
                     method: 'PUT', // 
                     headers: {
                         'Content-Type': 'application/json'
@@ -669,7 +672,7 @@ export default {
             //crear nuevos elementos
             for (let item of itemsToCreate) {
                 console.log('Creating item: ', item);
-                const response = await fetch(`http://localhost:3333/${tableProp}`, {
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

@@ -276,6 +276,7 @@ export default {
         let art_tareas = ref<ArtTarea[]>([]);
         let rutaGet = ref(``);
         let isLoading = ref(false);
+        const { $auth } = useNuxtApp();
 
         const formatPrice = (price: number) => {
             const roundedPrice = Math.round(price * 100) / 100; // Redondea a dos decimales
@@ -289,7 +290,7 @@ export default {
         async function refreshData() {
             isLoading.value = true; // Inicia el estado de carga
             try {
-                const response = await fetch(`http://localhost:3333/obras/${obra_id}/presupuesto`);
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/obras/${obra_id}/presupuesto`);
                 if (response.ok) {
                     const data = await response.json();
                     obra.value = data.obra;

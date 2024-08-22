@@ -6,12 +6,33 @@
     </main>
 </template>
 
-<script lang="ts">
-import GrillaAllClientesV2 from '~/components/grilla/GrillaAllClientesV2.vue';
+<script setup>
+import { onMounted, ref } from 'vue';
+import { useCookie } from '#app';
 
+const clientes = ref([]);
+
+onMounted(async () => {
+    try {
+        const response = await fetch('http://localhost:3333/clientes', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${useCookie('authToken').value}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch clientes');
+        }
+
+        clientes.value = await response.json();
+    } catch (error) {
+        console.error('Error fetching clientes:', error);
+    }
+});
 
 definePageMeta({
     middleware: 'auth'
 });
-
 </script>

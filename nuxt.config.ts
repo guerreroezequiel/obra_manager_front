@@ -7,7 +7,12 @@ export default defineNuxtConfig({
   // agregar proxy para evitar CORS
 
   runtimeConfig: {
-    apiUrl: process.env.API
+    public: {
+      appUrl: process.env.APP_URL,
+    },
+    private: {
+      apiUrl: process.env.API_URL
+    }
   },
 
   compatibilityDate: '2024-08-17',

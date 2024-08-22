@@ -445,6 +445,7 @@ export default {
         const showModalNuevaLista = ref(false)
         const newPreLisIdName = ref('');
         const selectedId = ref<number | null>(null);
+        const { $auth } = useNuxtApp();
 
         const addPreLisId = async () => {
             const apiUrl = 'http://localhost:3333/lis_pre_ids'; // URL de tu API
@@ -453,7 +454,7 @@ export default {
             };
 
             try {
-                const response = await fetch(apiUrl, {
+                const response = await $auth.fetchWithAuth(apiUrl, {
                     method: 'POST', // Método HTTP POST
                     headers: {
                         'Content-Type': 'application/json', // Tipo de contenido
@@ -472,7 +473,7 @@ export default {
                 newPreLisIdName.value = ''; // Limpia el campo de entrada
 
                 // Recargar la lista de IDs
-                // const responseLisPreIds = await fetch('http://localhost:3333/lis_pre_ids');
+                // const responseLisPreIds = await $auth.fetchWithAuth('http://localhost:3333/lis_pre_ids');
                 // if (responseLisPreIds.ok) {
                 //     lisPreIds.value = await responseLisPreIds.json();
                 //     console.log('lisPreIds: ', lisPreIds.value);
@@ -495,10 +496,10 @@ export default {
         async function refreshData() {
             // Recargar la consulta
             console.log('rutaGet desde all modal elegir id v2: ', props.rutaGet);
-            const response = await fetch(props.rutaGet);
+            const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/lis_pre`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/lis_pre`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -542,7 +543,7 @@ export default {
         onMounted(async () => {
             // Cargar la consulta
             refreshData();
-            const responseLisPreIds = await fetch('http://localhost:3333/lis_pre_ids');
+            const responseLisPreIds = await $auth.fetchWithAuth('http://localhost:3333/lis_pre_ids');
             if (responseLisPreIds.ok) {
                 lisPreIds.value = await responseLisPreIds.json();
                 console.log('lisPreIds: ', lisPreIds.value);
@@ -581,7 +582,7 @@ export default {
             for (let row of deletedRows.value) {
                 console.log(`http://localhost:3333/${tableProp}/${row.id}`)
                 try {
-                    const response = await fetch(`http://localhost:3333/${tableProp}/${row.id}`, {
+                    const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${row.id}`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
@@ -655,7 +656,7 @@ export default {
                 const url = `http://localhost:3333/user_field_settings/${userId}/${fieldId}`;
 
                 try {
-                    const response = await fetch(url, {
+                    const response = await $auth.fetchWithAuth(url, {
                         method: 'PUT', // o 'PATCH'
                         headers: {
                             'Content-Type': 'application/json',
@@ -712,7 +713,7 @@ export default {
             for (let id in itemsToUpdate) {
                 console.log('id: ', id, 'itemsToUpdate: ', itemsToUpdate[id]);
                 const item = itemsToUpdate[id];
-                const response = await fetch(`http://localhost:3333/${tableProp}/${id}`, {
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${id}`, {
                     method: 'PUT', // 
                     headers: {
                         'Content-Type': 'application/json'
@@ -728,7 +729,7 @@ export default {
             //crear nuevos elementos
             for (let item of itemsToCreate) {
                 console.log('Creating item: ', item);
-                const response = await fetch(`http://localhost:3333/${tableProp}`, {
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

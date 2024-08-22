@@ -322,6 +322,7 @@ export default {
         let deletedRows = ref<ItemType[]>([]);
         const showModalArticulos = ref(false)
         const selectedId = ref<number | null>(null);
+        const { $auth } = useNuxtApp();
 
         const recalculateTotal = (index: number) => {
             consulta.value[index].total = consulta.value[index].cantidad * consulta.value[index].precioUnitario;
@@ -393,10 +394,10 @@ export default {
         async function refreshData() {
             // Recargar la consulta
             console.log('rutaGet: ', props.rutaGet);
-            const response = await fetch(props.rutaGet);
+            const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/art_tarea`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/art_tarea`);  // campos editables
                 if (camposResponse.ok) {
                     const campos = await camposResponse.json();
                     fieldSettings.value = campos.map((campo: Campo) => ({
@@ -467,7 +468,7 @@ export default {
 
             for (let row of deletedRows.value) {
                 console.log(`http://localhost:3333/${tableProp}/${row.id}`)
-                const response = await fetch(`http://localhost:3333/${tableProp}/${row.id}`, {
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${row.id}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -539,7 +540,7 @@ export default {
                 const url = `http://localhost:3333/user_field_settings/${userId}/${fieldId}`;
 
                 try {
-                    const response = await fetch(url, {
+                    const response = await $auth.fetchWithAuth(url, {
                         method: 'PUT', // o 'PATCH'
                         headers: {
                             'Content-Type': 'application/json',
@@ -596,7 +597,7 @@ export default {
             for (let id in itemsToUpdate) {
                 console.log('id: ', id, 'itemsToUpdate: ', itemsToUpdate[id]);
                 const item = itemsToUpdate[id];
-                const response = await fetch(`http://localhost:3333/${tableProp}/${id}`, {
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${id}`, {
                     method: 'PUT', // 
                     headers: {
                         'Content-Type': 'application/json'
@@ -612,7 +613,7 @@ export default {
             //crear nuevos elementos
             for (let item of itemsToCreate) {
                 console.log('Creating item: ', item);
-                const response = await fetch(`http://localhost:3333/${tableProp}`, {
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -626,7 +627,7 @@ export default {
             }
 
             // guardas totalPrecioTotal
-            const responseTotal = await fetch(`http://localhost:3333/tareas/${consulta.value[0].tareaId}`, {
+            const responseTotal = await $auth.fetchWithAuth(`http://localhost:3333/tareas/${consulta.value[0].tareaId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'

@@ -218,7 +218,11 @@
                                         </div>
                                         <div class="flex flex-grow justify-between">
                                             <p class="ml-3 text-blas border-r border-slate-300 w-5/6 mr-2">
-                                                {{ tarea.descripcion }}</p>
+                                                <input v-model="tarea.descripcion" type="text" class="text-gray-700 "
+                                                    :readonly="!isEditing"
+                                                    :style="{ border: isEditing ? 'auto' : 'none', outline: 'none', backgroundColor: 'transparent' }" />
+                                            </p>
+
                                             <p class="w-1/6">{{ formatPrice(+tarea.total) }}</p>
                                             <p class="w-1/6">{{ formatPrice(+tarea.subtotal) }}</p>
                                         </div>
@@ -258,9 +262,9 @@
                                 <button v-if="isEditing && modulo.id != 0"
                                     class="mr-2 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:w-auto sm:text-sm active:bg-gray-300"
                                     @click="crearTarea(modulo.id)">Crear Tareas +</button>
-                                <button v-if="isEditing && modulo.id != 0"
+                                <!-- <button v-if="isEditing && modulo.id != 0"
                                     class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:w-auto sm:text-sm active:bg-gray-300"
-                                    @click="setCurrentId(modulo.id)">Importar Tareas +</button>
+                                    @click="setCurrentId(modulo.id)">Importar Tareas +</button> -->
                             </div>
 
 
@@ -438,6 +442,7 @@ export default {
         let deletedModulos = ref<number[]>([]);
         let deletedTareas = ref<number[]>([]);
         let isLoading = ref(false);
+        const { $auth } = useNuxtApp();
 
         const computedTareas = (moduloId: number) => computed(() => {
             return modulos.value
@@ -652,7 +657,7 @@ export default {
         async function refreshData() {
             isLoading.value = true; // Inicia el estado de carga
             try {
-                const response = await fetch(`http://localhost:3333/obras/${obra_id}/full`);
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/obras/${obra_id}/full`);
                 // console.log('obra_id:', obra_id);
                 if (response.ok) {
                     const data = await response.json();
@@ -831,7 +836,7 @@ export default {
                 const newEtapas = etapas.value.filter((item) => item.new === true);
 
                 for (const etapa of newEtapas) {
-                    const response = await fetch(`http://localhost:3333/etapas`, {
+                    const response = await $auth.fetchWithAuth(`http://localhost:3333/etapas`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -849,9 +854,8 @@ export default {
             // Identificar y crear los módulos nuevos
             async function enviarNuevosModulos() {
                 const newModulos = modulos.value.filter((item) => item.new === true);
-
                 for (const modulo of newModulos) {
-                    const response = await fetch(`http://localhost:3333/modulos`, {
+                    const response = await $auth.fetchWithAuth(`http://localhost:3333/modulos`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -872,7 +876,7 @@ export default {
 
                 // Crear las tareas nuevas en el servidor
                 for (const tarea of newTareas) {
-                    const response = await fetch(`http://localhost:3333/tareas`, {
+                    const response = await $auth.fetchWithAuth(`http://localhost:3333/tareas`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -906,7 +910,7 @@ export default {
         const saveChangedItems = async (changedItems: any, endpoint: string) => {
             for (let id in changedItems) {
                 const item = changedItems[id];
-                const response = await fetch(`http://localhost:3333/${endpoint}/${id}`, {
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/${endpoint}/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -923,12 +927,11 @@ export default {
         const deleteItems = async (deletedItems: string[], endpoint: string) => {
 
             for (let id of deletedItems) {
-                const response = await fetch(`http://localhost:3333/${endpoint}/${id}`, {
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/${endpoint}/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ habilitado: false }),
                 });
 
                 if (!response.ok) {
@@ -961,7 +964,7 @@ export default {
             rutaGet.value = `http://localhost:3333/art_tareas/tarea/${tarea.id}`;  // Actualiza la propiedad ruta
             // Carga los detalles de la tarea si no se han cargado aún
             if (!tarea.descripcion && tarea.artTareasVisible) {
-                const response = await fetch(`http://localhost:3333/tareas/${tarea.id}`);
+                const response = await $auth.fetchWithAuth(`http://localhost:3333/tareas/${tarea.id}`);
                 if (response.ok) {
                     tarea.descripcion = await response.json();
                 } else {

@@ -192,6 +192,7 @@ export default {
         let valores = ref<any[]>([]); // Definir valores aquí
         let currentPage = ref(1);
         let itemsPerPage = ref(10);
+        const { $auth } = useNuxtApp();
 
         const selectedId = ref<number | null>(null);
         const selectedRow = ref<ItemType | null>(null);
@@ -221,10 +222,10 @@ export default {
 
         const refreshData = async () => {
             console.log('rutaGet: ', props.rutaGet)
-            const response = await fetch(props.rutaGet);
+            const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await fetch(`http://localhost:3333/user_field_settings/table/${tableProp}`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/${tableProp}`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -260,7 +261,7 @@ export default {
         }
 
         const aplicarBusqueda = async () => {
-            const response = await fetch(props.rutaGet + '/' + busqueda.value);
+            const response = await $auth.fetchWithAuth(props.rutaGet + '/' + busqueda.value);
             console.log('ruta: ', props.rutaGet + '/' + busqueda.value)
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
