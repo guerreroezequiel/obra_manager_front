@@ -70,6 +70,9 @@ export default {
         let changedItems = ref<{ [key: string]: any }>({});
         let originalConsulta = ref([]);  // Nuevo estado
         let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
+        const config = useRuntimeConfig()
+        const appUrl = config.public.appUrl
+        const apiUrl = config.public.apiUrl
 
 
         onMounted(async () => {
@@ -78,7 +81,7 @@ export default {
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
                 // let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
-                const camposResponse = await fetch(`http://localhost:3333/editables/${tableProp}`);  // campos editables
+                const camposResponse = await fetch(`${apiUrl}/editables/${tableProp}`);  // campos editables
                 if (camposResponse.ok) {
                     const campos = await camposResponse.json();
                     editableFields.value = campos;
@@ -124,7 +127,7 @@ export default {
             for (let id in changedItems.value) {
                 console.log('id: ', id, 'changedItems: ', changedItems.value[id]);
                 const item = changedItems.value[id];
-                const response = await fetch(`http://localhost:3333/${tableProp}/${id}`, {
+                const response = await fetch(`${apiUrl}/${tableProp}/${id}`, {
                     method: 'PUT', // Aquí es donde especificas el método PUT
                     headers: {
                         'Content-Type': 'application/json'

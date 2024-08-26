@@ -85,9 +85,12 @@ export default {
     let obra = ref(null);
     let open = ref(false);
     let isEditing = ref(false);
+    const config = useRuntimeConfig()
+    const appUrl = config.public.appUrl
+    const apiUrl = config.public.apiUrl
 
     onMounted(async () => {
-      const response = await fetch(`http://localhost:3333/${props.table}/${props.id}/relations`);
+      const response = await fetch(`${apiUrl}/${props.table}/${props.id}/relations`);
       // console.log(props.table, props.id)
       if (response.ok) {
         obra.value = await response.json();

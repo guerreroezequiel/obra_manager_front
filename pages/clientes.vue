@@ -2,19 +2,27 @@
     <main class="mt-10 p-12">
 
         <h1>CLIENTES</h1>
-        <GrillaAllClientesV2 rutaGet="http://localhost:3333/clientes" />
+        <GrillaAllClientesV2 :rutaGet="`${apiUrl}/clientes`" />
     </main>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue';
-import { useCookie } from '#app';
+import { useCookie, useRuntimeConfig } from '#app';
+
+definePageMeta({
+    middleware: 'auth'
+});
+
+const config = useRuntimeConfig();
+const appUrl = config.public.appUrl;
+const apiUrl = config.public.apiUrl;
 
 const clientes = ref([]);
 
 onMounted(async () => {
     try {
-        const response = await fetch('http://localhost:3333/clientes', {
+        const response = await fetch(`${apiUrl}/clientes`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -32,7 +40,4 @@ onMounted(async () => {
     }
 });
 
-definePageMeta({
-    middleware: 'auth'
-});
 </script>

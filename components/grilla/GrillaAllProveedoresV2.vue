@@ -39,18 +39,7 @@
                                             class="bg-blue-200 px-2 rounded items-center justify-center">
                                             <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
                                         </button>
-                                        <!-- <ModalElegirIdV2 :showModal="showModalRubros"
-                                            :rutaGet="'http://localhost:3333/rubros'"
-                                            @close.native="showModalRubros = false"
-                                            @aceptar="updateRow($event, 'rubroId')" />
-                                        <ModalElegirIdV2 :showModal="showModalMarcas"
-                                            :rutaGet="'http://localhost:3333/marcas'"
-                                            @close.native="showModalMarcas = false"
-                                            @aceptar="updateRow($event, 'marcaId')" />
-                                        <ModalElegirIdV2 :showModal="showModalTipos"
-                                            :rutaGet="'http://localhost:3333/tipos'"
-                                            @close.native="showModalTipos = false"
-                                            @aceptar="updateRow($event, 'tipoId')" /> -->
+
                                     </div>
                                     <select v-else-if="field.type === 'list'" class="flex flex-grow bg-white rounded"
                                         :style="{ width: `50px` }" :disabled="!field.isEditable || !isEditing"
@@ -304,34 +293,6 @@ export default {
             this.consulta.push(newRow);
         },
 
-        // Obtener el nombre de un campo por su ID
-        // async fetchNombre(id: number, fieldName: string) {
-        //     if (id === null) {
-        //         console.error('ID es null');
-        //         return;
-        //     }
-
-        //     let url;
-        //     switch (fieldName) {
-        //         case 'rubroId':
-        //             url = `http://localhost:3333/rubros/${id}`;
-        //             break;
-        //         case 'marcaId':
-        //             url = `http://localhost:3333/marcas/${id}`;
-        //             break;
-        //         case 'tipoId':
-        //             url = `http://localhost:3333/tipos/${id}`;
-        //             break;
-        //         // Agrega más casos según sea necesario
-        //         default:
-        //             console.error('Nombre de campo no reconocido');
-        //             return;
-        //     }
-
-        //     const response = await fetch(url);
-        //     const data = await response.json();
-        //     this.nombres[`${fieldName}_${id}`] = data.nombre; // Usar una combinación de fieldName e id como clave
-        // },
 
         openModal(fieldName: string) {
             switch (fieldName) {
@@ -349,35 +310,6 @@ export default {
             }
         },
     },
-
-    // Cargar los nombres de los campos al inicio
-    // created() {
-    //     for (let item of this.consulta) {
-    //         for (let field in item) {
-    //             if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') {
-    //                 if (item[field] !== null) {
-    //                     this.fetchNombre(item[field] as number, field);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // },
-
-    // Actualizar los nombres de los campos al cambiar la consulta
-    // watch: {
-    //     consulta: {
-    //         immediate: true,
-    //         handler(newValue) {
-    //             for (let item of newValue) {
-    //                 for (let field in item) {
-    //                     if (field === 'rubroId' || field === 'marcaId' || field === 'tipoId') {
-    //                         this.fetchNombre(item[field], field);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // },
 
     setup(props, { emit }) {
         let consulta = ref<Proveedor[]>([]);
@@ -399,6 +331,9 @@ export default {
         const showModalTipos = ref(false)
         const selectedId = ref<number | null>(null);
         const { $auth } = useNuxtApp();
+        const config = useRuntimeConfig()
+        const appUrl = config.public.appUrl
+        const apiUrl = config.public.apiUrl
 
 
         const formatDate = (dateString: string) => {
@@ -413,7 +348,7 @@ export default {
             const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/proveedores`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`${apiUrl}/user_field_settings/table/proveedores`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -459,8 +394,8 @@ export default {
             refreshData();
 
             // Cargar las unidades de medida
-            const responseUni = await $auth.fetchWithAuth('http://localhost:3333/uni_meds');
-            const responsePre = await $auth.fetchWithAuth('http://localhost:3333/presentacions');
+            const responseUni = await $auth.fetchWithAuth('${apiUrl}/uni_meds');
+            const responsePre = await $auth.fetchWithAuth('${apiUrl}/presentacions');
             if (responseUni.ok) {
                 uniMeds.value = await responseUni.json();
                 console.log('uniMeds: ', uniMeds.value);
@@ -503,9 +438,9 @@ export default {
             console.log('deletedRows: ', deletedRows.value);
 
             for (let row of deletedRows.value) {
-                console.log(`http://localhost:3333/${tableProp}/${row.id}`)
+                console.log(`${apiUrl}/${tableProp}/${row.id}`)
                 try {
-                    const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${row.id}`, {
+                    const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}/${row.id}`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
@@ -526,30 +461,6 @@ export default {
             refreshData();
         };
 
-        // Actualizar el ID de una fila seleccionada
-        // const updateRow = (newId: any, modalField: string) => {
-        //     if (selected.value !== null && newId !== undefined) {
-        //         switch (modalField) {
-        //             case 'rubroId':
-        //                 selected.value.rubroId = newId.id;
-        //                 console.log('selectedRowModal rubroId: ', selected.value.rubroId);
-        //                 break;
-        //             case 'marcaId':
-        //                 selected.value.marcaId = newId.id;
-        //                 console.log('selectedRowModal marcaId: ', selected.value.marcaId);
-        //                 break;
-        //             case 'tipoId':
-        //                 selected.value.tipoId = newId.id;
-        //                 console.log('selectedRowModal tipoId: ', selected.value.tipoId);
-        //                 break;
-        //             default:
-        //                 console.error(`No se encontró un campo para el modalField: ${modalField}`);
-        //         }
-        //         console.log('selectedRowModal ID: ', selected.value.id);
-        //     } else {
-        //         console.error('Error al actualizar el RowModal');
-        //     }
-        // };
 
         //  activar o desactivar el modo de edición
         const toggleEdit = async () => {
@@ -582,7 +493,7 @@ export default {
                 const userId = field.userId;
                 const fieldId = field.id;
 
-                const url = `http://localhost:3333/user_field_settings/${userId}/${fieldId}`;
+                const url = `${apiUrl}/user_field_settings/${userId}/${fieldId}`;
 
                 try {
                     const response = await $auth.fetchWithAuth(url, {
@@ -642,7 +553,7 @@ export default {
             for (let id in itemsToUpdate) {
                 console.log('id: ', id, 'itemsToUpdate: ', itemsToUpdate[id]);
                 const item = itemsToUpdate[id];
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${id}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}/${id}`, {
                     method: 'PUT', // 
                     headers: {
                         'Content-Type': 'application/json'
@@ -658,7 +569,7 @@ export default {
             //crear nuevos elementos
             for (let item of itemsToCreate) {
                 console.log('Creating item: ', item);
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

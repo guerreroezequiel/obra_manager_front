@@ -121,6 +121,9 @@ export default {
         let currentPage = ref(1);
         let itemsPerPage = ref(10);
         const selectedId = ref<number | null>(null);
+        const config = useRuntimeConfig()
+        const appUrl = config.public.appUrl
+        const apiUrl = config.public.apiUrl
 
         const selectRow = (item: ItemType) => {
             selectedId.value = item.id;
@@ -195,10 +198,8 @@ export default {
         }
 
         const nuevaCopia = async (selectedId: number) => {
-            // console.log('selectedId: ', selectedId);
-            console.log(`http://localhost:3333/${tableProp}/copy/${selectedId}`)
             console.log('props.fkPadre: ', props.fkPadre)
-            const response = await fetch(`http://localhost:3333/${tableProp}/copy/${selectedId}`, {
+            const response = await fetch(`${apiUrl}/${tableProp}/copy/${selectedId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

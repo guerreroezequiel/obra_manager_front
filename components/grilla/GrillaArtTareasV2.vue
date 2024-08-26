@@ -7,9 +7,8 @@
                 class="rounded-md p-2 w-80 bg-gray-200 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
                 type="text" placeholder="Buscar" />
         </div> -->
-        <ModalArticuloArtTarea :fkPadre=tareaId :showModal="showModalArticulos"
-            :rutaGet="'http://localhost:3333/lis_pre/buscador'" @close.native="showModalArticulos = false"
-            @aceptar="updateRow" />
+        <ModalArticuloArtTarea :fkPadre=tareaId :showModal="showModalArticulos" :rutaGet="`${apiUrl}/lis_pre/buscador`"
+            @close.native="showModalArticulos = false" @aceptar="updateRow" />
         <div class="flex flex-col" v-if="consulta && fieldSettings" :class="{ 'visible ': open, 'invisible ': !open }">
 
             <div
@@ -323,6 +322,9 @@ export default {
         const showModalArticulos = ref(false)
         const selectedId = ref<number | null>(null);
         const { $auth } = useNuxtApp();
+        const config = useRuntimeConfig()
+        const appUrl = config.public.appUrl
+        const apiUrl = config.public.apiUrl
 
         const recalculateTotal = (index: number) => {
             consulta.value[index].total = consulta.value[index].cantidad * consulta.value[index].precioUnitario;
@@ -397,7 +399,7 @@ export default {
             const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/art_tarea`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`${apiUrl}/user_field_settings/table/art_tarea`);  // campos editables
                 if (camposResponse.ok) {
                     const campos = await camposResponse.json();
                     fieldSettings.value = campos.map((campo: Campo) => ({
@@ -467,8 +469,8 @@ export default {
             console.log('deletedRows: ', deletedRows.value);
 
             for (let row of deletedRows.value) {
-                console.log(`http://localhost:3333/${tableProp}/${row.id}`)
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${row.id}`, {
+                console.log(`${apiUrl}/${tableProp}/${row.id}`)
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}/${row.id}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -537,7 +539,7 @@ export default {
                 const userId = field.userId;
                 const fieldId = field.id;
 
-                const url = `http://localhost:3333/user_field_settings/${userId}/${fieldId}`;
+                const url = `${apiUrl}/user_field_settings/${userId}/${fieldId}`;
 
                 try {
                     const response = await $auth.fetchWithAuth(url, {
@@ -597,7 +599,7 @@ export default {
             for (let id in itemsToUpdate) {
                 console.log('id: ', id, 'itemsToUpdate: ', itemsToUpdate[id]);
                 const item = itemsToUpdate[id];
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${id}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}/${id}`, {
                     method: 'PUT', // 
                     headers: {
                         'Content-Type': 'application/json'
@@ -613,7 +615,7 @@ export default {
             //crear nuevos elementos
             for (let item of itemsToCreate) {
                 console.log('Creating item: ', item);
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -627,7 +629,7 @@ export default {
             }
 
             // guardas totalPrecioTotal
-            const responseTotal = await $auth.fetchWithAuth(`http://localhost:3333/tareas/${consulta.value[0].tareaId}`, {
+            const responseTotal = await $auth.fetchWithAuth(`${apiUrl}/tareas/${consulta.value[0].tareaId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -640,7 +642,7 @@ export default {
                 console.error('Error al guardar totalPrecio en  la tareas: ', responseTotal.url);
             }
             console.log({ total: totalPrecioTotal })
-            console.log(` ruta para totalPrecioTotal http://localhost:3333/tareas/${consulta.value[0].tareaId}`)
+            console.log(` ruta para totalPrecioTotal ${apiUrl}/tareas/${consulta.value[0].tareaId}`)
             for (let prop in itemsToUpdate) {
                 delete itemsToUpdate[prop];
             }
@@ -679,6 +681,7 @@ export default {
             selectRow,
             selectedArtTarea,
             deleteRowVisual,
+            apiUrl
         };
     }
 };

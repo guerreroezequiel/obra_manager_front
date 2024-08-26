@@ -1,7 +1,7 @@
 <template>
     <main class="flex bg-gradient-to-r from-gray-100 to-orange-50">
-        <ModalAgregar :showModal="showModalModulos" :rutaGet="'http://localhost:3333/models/modulos'"
-            @close="showModalModulos = false" @aceptar="refreshData()" />
+        <!-- <ModalAgregar :showModal="showModalModulos" :rutaGet="'${apiUrl}/models/modulos'"
+            @close="showModalModulos = false" @aceptar="refreshData()" /> -->
         <div>
             <!-- Cartel de carga -->
             <div v-if="isLoading" class="fixed inset-0 bg-gray-400 bg-opacity-50 flex justify-center items-center">
@@ -268,8 +268,8 @@
                             </div>
 
 
-                            <DashForm :showModal="showModalTareas" :rutaGet="'http://localhost:3333/tareas'"
-                                :fkPadre="currentId" @close="showModalTareas = false" @aceptar="refreshData()" />
+                            <DashForm :showModal="showModalTareas" :rutaGet="`${apiUrl}/tareas`" :fkPadre="currentId"
+                                @close="showModalTareas = false" @aceptar="refreshData()" />
                         </div>
 
                     </div>
@@ -443,6 +443,10 @@ export default {
         let deletedTareas = ref<number[]>([]);
         let isLoading = ref(false);
         const { $auth } = useNuxtApp();
+        const config = useRuntimeConfig()
+        const appUrl = config.public.appUrl
+        const apiUrl = config.public.apiUrl
+
 
         const computedTareas = (moduloId: number) => computed(() => {
             return modulos.value
@@ -657,7 +661,7 @@ export default {
         async function refreshData() {
             isLoading.value = true; // Inicia el estado de carga
             try {
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/obras/${obra_id}/full`);
+                const response = await $auth.fetchWithAuth(`${apiUrl}/obras/${obra_id}/full`);
                 // console.log('obra_id:', obra_id);
                 if (response.ok) {
                     const data = await response.json();
@@ -836,7 +840,7 @@ export default {
                 const newEtapas = etapas.value.filter((item) => item.new === true);
 
                 for (const etapa of newEtapas) {
-                    const response = await $auth.fetchWithAuth(`http://localhost:3333/etapas`, {
+                    const response = await $auth.fetchWithAuth(`${apiUrl}/etapas`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -855,7 +859,7 @@ export default {
             async function enviarNuevosModulos() {
                 const newModulos = modulos.value.filter((item) => item.new === true);
                 for (const modulo of newModulos) {
-                    const response = await $auth.fetchWithAuth(`http://localhost:3333/modulos`, {
+                    const response = await $auth.fetchWithAuth(`${apiUrl}/modulos`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -876,7 +880,7 @@ export default {
 
                 // Crear las tareas nuevas en el servidor
                 for (const tarea of newTareas) {
-                    const response = await $auth.fetchWithAuth(`http://localhost:3333/tareas`, {
+                    const response = await $auth.fetchWithAuth(`${apiUrl}/tareas`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -910,7 +914,7 @@ export default {
         const saveChangedItems = async (changedItems: any, endpoint: string) => {
             for (let id in changedItems) {
                 const item = changedItems[id];
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${endpoint}/${id}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${endpoint}/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -927,7 +931,7 @@ export default {
         const deleteItems = async (deletedItems: string[], endpoint: string) => {
 
             for (let id of deletedItems) {
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${endpoint}/${id}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${endpoint}/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -961,10 +965,10 @@ export default {
         async function verArtTarea(tarea: Tarea) {
             // Cambia la visibilidad de la modulo
             tarea.artTareasVisible = !tarea.artTareasVisible;
-            rutaGet.value = `http://localhost:3333/art_tareas/tarea/${tarea.id}`;  // Actualiza la propiedad ruta
+            rutaGet.value = `${apiUrl}/art_tareas/tarea/${tarea.id}`;  // Actualiza la propiedad ruta
             // Carga los detalles de la tarea si no se han cargado aún
             if (!tarea.descripcion && tarea.artTareasVisible) {
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/tareas/${tarea.id}`);
+                const response = await $auth.fetchWithAuth(`${apiUrl}/tareas/${tarea.id}`);
                 if (response.ok) {
                     tarea.descripcion = await response.json();
                 } else {
@@ -1011,6 +1015,8 @@ export default {
             crearEtapa,
             guardarTarea,
             isLoading,
+            apiUrl,
+            appUrl,
 
         };
     }

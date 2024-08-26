@@ -39,16 +39,13 @@
                                             class="bg-blue-200 px-2 rounded items-center justify-center">
                                             <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
                                         </button>
-                                        <ModalElegirIdV2 :showModal="showModalRubros"
-                                            :rutaGet="'http://localhost:3333/rubros'"
+                                        <ModalElegirIdV2 :showModal="showModalRubros" :rutaGet="`${apiUrl}/rubros`"
                                             @close.native="showModalRubros = false"
                                             @aceptar="updateRow($event, 'rubroId')" />
-                                        <ModalElegirIdV2 :showModal="showModalMarcas"
-                                            :rutaGet="'http://localhost:3333/marcas'"
+                                        <ModalElegirIdV2 :showModal="showModalMarcas" :rutaGet="`${apiUrl}/marcas`"
                                             @close.native="showModalMarcas = false"
                                             @aceptar="updateRow($event, 'marcaId')" />
-                                        <ModalElegirIdV2 :showModal="showModalTipos"
-                                            :rutaGet="'http://localhost:3333/tipos'"
+                                        <ModalElegirIdV2 :showModal="showModalTipos" :rutaGet="`${apiUrl}/tipos`"
                                             @close.native="showModalTipos = false"
                                             @aceptar="updateRow($event, 'tipoId')" />
                                     </div>
@@ -190,6 +187,7 @@ export default {
             currentPage: 1,
             perPage: 18,
             // ...
+
         }
     },
 
@@ -322,17 +320,18 @@ export default {
                 console.error('ID es null');
                 return;
             }
-
+            const config = useRuntimeConfig()
+            const apiUrl = config.public.apiUrl
             let url;
             switch (fieldName) {
                 case 'rubroId':
-                    url = `http://localhost:3333/rubros/${id}`;
+                    url = `${apiUrl}/rubros/${id}`;
                     break;
                 case 'marcaId':
-                    url = `http://localhost:3333/marcas/${id}`;
+                    url = `${apiUrl}/marcas/${id}`;
                     break;
                 case 'tipoId':
-                    url = `http://localhost:3333/tipos/${id}`;
+                    url = `${apiUrl}/tipos/${id}`;
                     break;
                 // Agrega más casos según sea necesario
                 default:
@@ -412,8 +411,8 @@ export default {
         const selectedId = ref<number | null>(null);
         const { $auth } = useNuxtApp();
         const config = useRuntimeConfig()
-        const apiUrl = config.apiUrl
-
+        const appUrl = config.public.appUrl
+        const apiUrl = config.public.apiUrl
 
         const formatDate = (dateString: string) => {
             const date = parseISO(dateString);
@@ -427,7 +426,7 @@ export default {
             const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/articulos`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`${apiUrl}/user_field_settings/table/articulos`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -473,8 +472,8 @@ export default {
             refreshData();
 
             // Cargar las unidades de medida
-            const responseUni = await $auth.fetchWithAuth('http://localhost:3333/uni_meds');
-            const responsePre = await $auth.fetchWithAuth('http://localhost:3333/presentacions');
+            const responseUni = await $auth.fetchWithAuth('${apiUrl}/uni_meds');
+            const responsePre = await $auth.fetchWithAuth('${apiUrl}/presentacions');
             if (responseUni.ok) {
                 uniMeds.value = await responseUni.json();
                 console.log('uniMeds: ', uniMeds.value);
@@ -517,9 +516,9 @@ export default {
             console.log('deletedRows: ', deletedRows.value);
 
             for (let row of deletedRows.value) {
-                console.log(`http://localhost:3333/${tableProp}/${row.id}`)
+                console.log(`${apiUrl}/${tableProp}/${row.id}`)
                 try {
-                    const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${row.id}`, {
+                    const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}/${row.id}`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
@@ -596,7 +595,7 @@ export default {
                 const userId = field.userId;
                 const fieldId = field.id;
 
-                const url = `http://localhost:3333/user_field_settings/${userId}/${fieldId}`;
+                const url = `${apiUrl}/user_field_settings/${userId}/${fieldId}`;
 
                 try {
                     const response = await $auth.fetchWithAuth(url, {
@@ -656,7 +655,7 @@ export default {
             for (let id in itemsToUpdate) {
                 console.log('id: ', id, 'itemsToUpdate: ', itemsToUpdate[id]);
                 const item = itemsToUpdate[id];
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${id}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}/${id}`, {
                     method: 'PUT', // 
                     headers: {
                         'Content-Type': 'application/json'
@@ -672,7 +671,7 @@ export default {
             //crear nuevos elementos
             for (let item of itemsToCreate) {
                 console.log('Creating item: ', item);
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -720,6 +719,8 @@ export default {
             selectRow,
             deleteRowVisual,
             selected,
+            apiUrl,
+            appUrl
         };
     }
 };

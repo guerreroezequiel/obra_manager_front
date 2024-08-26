@@ -230,6 +230,9 @@ export default {
         let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
         let deletedRows = ref<ItemType[]>([]);
         const { $auth } = useNuxtApp();
+        const config = useRuntimeConfig()
+        const appUrl = config.public.appUrl
+        const apiUrl = config.public.apiUrl
 
 
 
@@ -239,7 +242,7 @@ export default {
             const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/uni_meds`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`${apiUrl}/user_field_settings/table/uni_meds`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -303,9 +306,9 @@ export default {
             console.log('deletedRows: ', deletedRows.value);
 
             for (let row of deletedRows.value) {
-                console.log(`http://localhost:3333/uni_meds/${row.id}`)
+                console.log(`${apiUrl}/uni_meds/${row.id}`)
                 try {
-                    const response = await $auth.fetchWithAuth(`http://localhost:3333/uni_meds/${row.id}`, {
+                    const response = await $auth.fetchWithAuth(`${apiUrl}/uni_meds/${row.id}`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
@@ -358,7 +361,7 @@ export default {
                 const userId = field.userId;
                 const fieldId = field.id;
 
-                const url = `http://localhost:3333/user_field_settings/${userId}/${fieldId}`;
+                const url = `${apiUrl}/user_field_settings/${userId}/${fieldId}`;
 
                 try {
                     const response = await $auth.fetchWithAuth(url, {
@@ -418,7 +421,7 @@ export default {
             for (let id in itemsToUpdate) {
                 console.log('id: ', id, 'itemsToUpdate: ', itemsToUpdate[id]);
                 const item = itemsToUpdate[id];
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/uni_meds/${id}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/uni_meds/${id}`, {
                     method: 'PUT', // 
                     headers: {
                         'Content-Type': 'application/json'
@@ -434,7 +437,7 @@ export default {
             //crear nuevos elementos
             for (let item of itemsToCreate) {
                 console.log('Creating item: ', item);
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/uni_meds`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/uni_meds`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

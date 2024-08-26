@@ -188,6 +188,9 @@ export default {
         let currentPage = ref(1);
         let itemsPerPage = ref(10);
         const { $auth } = useNuxtApp();
+        const config = useRuntimeConfig()
+        const appUrl = config.public.appUrl
+        const apiUrl = config.public.apiUrl
 
         const selectedId = ref<number | null>(null);
         const selectedRow = ref<ItemType | null>(null);
@@ -218,7 +221,7 @@ export default {
             const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/${tableProp}`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`${apiUrl}/user_field_settings/table/${tableProp}`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();

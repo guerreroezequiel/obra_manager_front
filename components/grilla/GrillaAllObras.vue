@@ -45,8 +45,7 @@
                                             class="bg-blue-200 px-2 rounded items-center justify-center">
                                             <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
                                         </button>
-                                        <ModalElegirIdV2 :showModal="showModalClientes"
-                                            :rutaGet="'http://localhost:3333/clientes'"
+                                        <ModalElegirIdV2 :showModal="showModalClientes" :rutaGet="`${apiUrl}/clientes`"
                                             @close.native="showModalClientes = false"
                                             @aceptar="updateRow($event, 'clienteId')" />
                                     </div>
@@ -403,6 +402,9 @@ export default {
         const showModalClientes = ref(false)
         const selectedId = ref<number | null>(null);
         const { $auth } = useNuxtApp();
+        const config = useRuntimeConfig()
+        const appUrl = config.public.appUrl
+        const apiUrl = config.public.apiUrl
 
 
         const formatDate = (dateString: string) => {
@@ -417,7 +419,7 @@ export default {
             const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/obras`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`${apiUrl}/user_field_settings/table/obras`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -463,7 +465,7 @@ export default {
             refreshData();
 
             // Cargar cliente
-            const responsePre = await $auth.fetchWithAuth('http://localhost:3333/clientes');
+            const responsePre = await $auth.fetchWithAuth('${apiUrl}/clientes');
             if (responsePre.ok) {
                 clientes.value = await responsePre.json();
                 console.log('uniMeds: ', clientes.value);
@@ -500,9 +502,9 @@ export default {
             console.log('deletedRows: ', deletedRows.value);
 
             for (let row of deletedRows.value) {
-                console.log(`http://localhost:3333/${tableProp}/${row.id}`)
+                console.log(`${apiUrl}/${tableProp}/${row.id}`)
                 try {
-                    const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${row.id}`, {
+                    const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}/${row.id}`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
@@ -571,7 +573,7 @@ export default {
                 const userId = field.userId;
                 const fieldId = field.id;
 
-                const url = `http://localhost:3333/user_field_settings/${userId}/${fieldId}`;
+                const url = `${apiUrl}/user_field_settings/${userId}/${fieldId}`;
 
                 try {
                     const response = await $auth.fetchWithAuth(url, {
@@ -631,7 +633,7 @@ export default {
             for (let id in itemsToUpdate) {
                 console.log('id: ', id, 'itemsToUpdate: ', itemsToUpdate[id]);
                 const item = itemsToUpdate[id];
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${id}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}/${id}`, {
                     method: 'PUT', // 
                     headers: {
                         'Content-Type': 'application/json'
@@ -647,7 +649,7 @@ export default {
             //crear nuevos elementos
             for (let item of itemsToCreate) {
                 console.log('Creating item: ', item);
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -692,6 +694,7 @@ export default {
             selectRow,
             deleteRowVisual,
             selected,
+            apiUrl
         };
     }
 };

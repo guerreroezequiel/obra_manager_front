@@ -57,12 +57,8 @@
                                             class="bg-blue-200 px-2 rounded items-center justify-center">
                                             <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
                                         </button>
-                                        <!-- <ModalElegirIdV2 :showModal="showModalProveedores"
-                                            :rutaGet="'http://localhost:3333/proveedores'"
-                                            @close.native="showModalProveedores = false"
-                                            @aceptar="updateRow($event, 'proveedorId')" /> -->
-                                        <ModalElegirId :showModal="showModalArticulos"
-                                            :rutaGet="'http://localhost:3333/articulos'"
+
+                                        <ModalElegirId :showModal="showModalArticulos" :rutaGet="`${apiUrl}/articulos`"
                                             @close.native="showModalArticulos = false"
                                             @aceptar="updateRow($event, 'articuloId')" />
 
@@ -360,6 +356,8 @@ export default {
 
         // Obtener el nombre de un campo por su ID
         async fetchNombre(id: number, fieldName: string) {
+            const config = useRuntimeConfig()
+            const apiUrl = config.public.apiUrl
             if (id === null) {
                 console.error('ID es null');
                 return;
@@ -368,10 +366,10 @@ export default {
             let url;
             switch (fieldName) {
                 case 'articuloId':
-                    url = `http://localhost:3333/articulos/${id}`;
+                    url = `${apiUrl}/articulos/${id}`;
                     break;
                 case 'proveedorId':
-                    url = `http://localhost:3333/proveedores/${id}`;
+                    url = `${apiUrl}/proveedores/${id}`;
                     break;
                 // Agrega más casos según sea necesario
                 default:
@@ -446,9 +444,12 @@ export default {
         const newPreLisIdName = ref('');
         const selectedId = ref<number | null>(null);
         const { $auth } = useNuxtApp();
+        const config = useRuntimeConfig()
+        const appUrl = config.public.appUrl
+        const apiUrl = config.public.apiUrl
 
         const addPreLisId = async () => {
-            const apiUrl = 'http://localhost:3333/lis_pre_ids'; // URL de tu API
+            const apiUrl = '${apiUrl}/lis_pre_ids'; // URL de tu API
             const data = {
                 nombre: newPreLisIdName.value, // Datos que se enviarán
             };
@@ -473,7 +474,7 @@ export default {
                 newPreLisIdName.value = ''; // Limpia el campo de entrada
 
                 // Recargar la lista de IDs
-                // const responseLisPreIds = await $auth.fetchWithAuth('http://localhost:3333/lis_pre_ids');
+                // const responseLisPreIds = await $auth.fetchWithAuth('${apiUrl}/lis_pre_ids');
                 // if (responseLisPreIds.ok) {
                 //     lisPreIds.value = await responseLisPreIds.json();
                 //     console.log('lisPreIds: ', lisPreIds.value);
@@ -499,7 +500,7 @@ export default {
             const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
-                const camposResponse = await $auth.fetchWithAuth(`http://localhost:3333/user_field_settings/table/lis_pre`);  // campos editables
+                const camposResponse = await $auth.fetchWithAuth(`${apiUrl}/user_field_settings/table/lis_pre`);  // campos editables
                 if (camposResponse.ok) {
                     console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
@@ -543,7 +544,7 @@ export default {
         onMounted(async () => {
             // Cargar la consulta
             refreshData();
-            const responseLisPreIds = await $auth.fetchWithAuth('http://localhost:3333/lis_pre_ids');
+            const responseLisPreIds = await $auth.fetchWithAuth('${apiUrl}/lis_pre_ids');
             if (responseLisPreIds.ok) {
                 lisPreIds.value = await responseLisPreIds.json();
                 console.log('lisPreIds: ', lisPreIds.value);
@@ -580,9 +581,9 @@ export default {
             console.log('deletedRows: ', deletedRows.value);
 
             for (let row of deletedRows.value) {
-                console.log(`http://localhost:3333/${tableProp}/${row.id}`)
+                console.log(`${apiUrl}/${tableProp}/${row.id}`)
                 try {
-                    const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${row.id}`, {
+                    const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}/${row.id}`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
@@ -653,7 +654,7 @@ export default {
                 const userId = field.userId;
                 const fieldId = field.id;
 
-                const url = `http://localhost:3333/user_field_settings/${userId}/${fieldId}`;
+                const url = `${apiUrl}/user_field_settings/${userId}/${fieldId}`;
 
                 try {
                     const response = await $auth.fetchWithAuth(url, {
@@ -713,7 +714,7 @@ export default {
             for (let id in itemsToUpdate) {
                 console.log('id: ', id, 'itemsToUpdate: ', itemsToUpdate[id]);
                 const item = itemsToUpdate[id];
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}/${id}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}/${id}`, {
                     method: 'PUT', // 
                     headers: {
                         'Content-Type': 'application/json'
@@ -729,7 +730,7 @@ export default {
             //crear nuevos elementos
             for (let item of itemsToCreate) {
                 console.log('Creating item: ', item);
-                const response = await $auth.fetchWithAuth(`http://localhost:3333/${tableProp}`, {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/${tableProp}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -777,6 +778,8 @@ export default {
             selectRow,
             deleteRowVisual,
             selected,
+            apiUrl,
+            appUrl,
         };
     }
 };
