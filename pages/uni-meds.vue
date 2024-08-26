@@ -2,19 +2,27 @@
     <main class="mt-10 p-12">
 
         <h1>uniMeds</h1>
-        <GrillaAllUniMeds rutaGet="http://localhost:3333/uni_medsAll" />
+        <GrillaAllUniMeds :rutaGet="`${apiUrl}/uni_medsAll`" />
     </main>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue';
-import { useCookie } from '#app';
+import { useCookie, useRuntimeConfig } from '#app';
 
-const uniMeds = ref([]);
+definePageMeta({
+    middleware: 'auth'
+});
+
+const config = useRuntimeConfig();
+const appUrl = config.public.appUrl;
+const apiUrl = config.public.apiUrl;
+
+const clientes = ref([]);
 
 onMounted(async () => {
     try {
-        const response = await fetch('http://localhost:3333/uni_medsAll', {
+        const response = await fetch(`${apiUrl}/uni_medsAll`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -23,16 +31,13 @@ onMounted(async () => {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to fetch uniMeds');
+            throw new Error('Failed to fetch uni_medsAll');
         }
 
-        uniMeds.value = await response.json();
+        clientes.value = await response.json();
     } catch (error) {
-        console.error('Error fetching uniMeds:', error);
+        console.error('Error fetching clientes:', error);
     }
 });
 
-definePageMeta({
-    middleware: 'auth'
-});
 </script>

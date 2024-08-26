@@ -2,7 +2,7 @@
     <main class="mt-10 p-12">
 
         <h1>OBRAS</h1>
-        <GrillaAllObras rutaGet="http://localhost:3333/obras" />
+        <GrillaAllObras :rutaGet="`${apiUrl}/obras`" />
     </main>
 </template>
 
@@ -10,12 +10,15 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useCookie } from '#app';
-
 const obras = ref([]);
+
+const config = useRuntimeConfig();
+const appUrl = config.public.appUrl;
+const apiUrl = config.public.apiUrl;
 
 onMounted(async () => {
     try {
-        const response = await fetch('http://localhost:3333/obras', {
+        const response = await fetch(`${apiUrl}/obras`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
