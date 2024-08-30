@@ -7,8 +7,7 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "nuxt build": "nuxt build"
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "date-fns": "^3.6.0",

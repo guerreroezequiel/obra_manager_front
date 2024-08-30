@@ -6,9 +6,13 @@ export default defineNuxtPlugin(() => {
     const authCookie = useCookie("authToken", {
         maxAge: 60 * 60
     })
+    const config = useRuntimeConfig()
+    const appUrl = config.public.appUrl
+    const apiUrl = config.public.apiUrl
     const login = async (email: string, password: string) => {
+
         try {
-            const response = await fetch('http://localhost:3333/login', {
+            const response = await fetch(`${apiUrl}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

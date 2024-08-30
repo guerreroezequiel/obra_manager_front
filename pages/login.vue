@@ -27,6 +27,7 @@ import { useRouter } from 'vue-router'
 import { useCookie } from '#app';
 const { $auth } = useNuxtApp();
 
+
 const email = ref('')
 const password = ref('')
 const router = useRouter()
