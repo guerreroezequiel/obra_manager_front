@@ -263,6 +263,7 @@ export default {
         const config = useRuntimeConfig()
         const appUrl = config.public.appUrl
         const apiUrl = config.public.apiUrl
+        const router = useRouter();
 
         const formatPrice = (price: number) => {
             const roundedPrice = Math.round(price * 100) / 100; // Redondea a dos decimales
@@ -271,8 +272,17 @@ export default {
 
         // Carga los detalles de la obra
         onMounted(async () => {
-            await refreshData();
+            try {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/obras/${obra_id}/presupuesto`)
+                if (!response.ok) {
+                    router.push('/login');
+                }
+                await refreshData();
+            } catch (error) {
+                console.error('Error fetching obra:', error);
+            }
         });
+
         async function refreshData() {
             isLoading.value = true; // Inicia el estado de carga
             try {

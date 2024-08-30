@@ -446,6 +446,10 @@ export default {
         const config = useRuntimeConfig()
         const appUrl = config.public.appUrl
         const apiUrl = config.public.apiUrl
+        const authToken = useCookie('authToken').value;
+        const router = useRouter();
+
+
 
 
         const computedTareas = (moduloId: number) => computed(() => {
@@ -655,7 +659,16 @@ export default {
 
         // Carga los detalles de la obra
         onMounted(async () => {
-            await refreshData();
+            try {
+                const response = await $auth.fetchWithAuth(`${apiUrl}/obras/${obra_id}/full`)
+                if (!response.ok) {
+                    router.push('/login');
+                }
+                await refreshData();
+            } catch (error) {
+                console.error('Error fetching obra:', error);
+            }
+
         });
 
         async function refreshData() {

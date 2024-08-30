@@ -17,17 +17,13 @@
                 <div v-if="showDropdowns['menu1']"
                     class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md shadow-lg bg-orange-50 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none"
                     @click.away="showDropdowns['menu1'] = false"
-                    @keydown.escape.window="showDropdowns['menu1'] = false"> <a :href="`${appUrl}/articulos`"
+                    @keydown.escape.window="showDropdowns['menu1'] = false"> <a :href="`/articulos`"
                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Articulos</a>
-                    <a :href="`${appUrl}/rubros`"
-                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rubros</a>
-                    <a :href="`${appUrl}/marcas`"
-                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Marcas</a>
-                    <a :href="`${appUrl}/tipos`"
-                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Tipos</a>
-                    <a :href="`${appUrl}/uni-meds`"
-                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Unidades</a>
-                    <a :href="`${appUrl}/presentaciones`"
+                    <a :href="`/rubros`" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rubros</a>
+                    <a :href="`/marcas`" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Marcas</a>
+                    <a :href="`/tipos`" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Tipos</a>
+                    <a :href="`/uni-meds`" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Unidades</a>
+                    <a :href="`/presentaciones`"
                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Presentaciones</a>
                 </div>
             </div>
@@ -40,11 +36,11 @@
                 <div v-if="showDropdowns['menu2']"
                     class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md shadow-lg bg-orange-50 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none"
                     @click.away="showDropdowns['menu2'] = false"
-                    @keydown.escape.window="showDropdowns['menu2'] = false"> <a :href="`${appUrl}/Proveedores`"
+                    @keydown.escape.window="showDropdowns['menu2'] = false"> <a :href="`/Proveedores`"
                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Proveedores</a>
-                    <a :href="`${appUrl}/precios-de-venta`"
+                    <a :href="`/precios-de-venta`"
                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Precios de venta</a>
-                    <a :href="`${appUrl}/listas-de-precios`"
+                    <a :href="`/listas-de-precios`"
                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Listas de precios</a>
                 </div>
             </div>
@@ -53,7 +49,7 @@
         <div class="flex">
 
             <div class="relative mr-6">
-                <a :href="`${appUrl}/Obras`" class="block px-4 py-2 text-sm text-gray-700 ">Obras</a>
+                <a :href="`/Obras`" class="block px-4 py-2 text-sm text-gray-700 ">Obras</a>
 
             </div>
 

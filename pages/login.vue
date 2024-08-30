@@ -32,7 +32,6 @@ const email = ref('')
 const password = ref('')
 const router = useRouter()
 const authToken = useCookie('authToken');
-
 const login = async () => {
     const result = await $auth.login(email.value, password.value);
     if (result) {
