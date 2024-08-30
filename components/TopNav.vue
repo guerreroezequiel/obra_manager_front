@@ -5,7 +5,7 @@
         <div class="flex flex-row-reverse">
 
             <button class="mr-6">
-                <a :href="`${appUrl}/Clientes`">Clientes</a>
+                <a :href="`/Clientes`">Clientes</a>
             </button>
 
             <div class="relative mr-6">
