@@ -1,6 +1,5 @@
 <template>
-    <main class="mt-10 p-12">
-
+    <main class="">
         <h1>PRECIOS DE VENTA</h1>
         <GrillaAllLisPreV3 :rutaGet="`${apiUrl}/lis_pre`" />
     </main>

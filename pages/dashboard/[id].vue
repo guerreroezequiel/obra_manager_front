@@ -1,5 +1,5 @@
 <template>
-    <main class="flex bg-gradient-to-r from-gray-100 to-orange-50">
+    <main class="flex ">
         <!-- <ModalAgregar :showModal="showModalModulos" :rutaGet="'${apiUrl}/models/modulos'"
             @close="showModalModulos = false" @aceptar="refreshData()" /> -->
         <div>
