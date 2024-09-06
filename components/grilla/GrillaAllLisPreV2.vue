@@ -1,24 +1,5 @@
 <template>
     <div class="flex flex-col p-2 rounded-lg">
-        <div class="flex flex-col p-2 rounded-lg">
-            <!-- Modal agregar lista-->
-            <div v-if="showModalNuevaLista"
-                class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-                <div class="bg-white p-4 rounded-lg shadow-lg w-1/3">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg">Agregar nueva Lista de Precios</h2>
-                        <button @click="showModalNuevaLista = false" class="text-black">&times;</button>
-                    </div>
-                    <input type="text" v-model="newPreLisIdName" placeholder="Nombre"
-                        class="p-2 border rounded w-full mb-4">
-                    <button @click="addPreLisId"
-                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 w-full">
-                        Agregar
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div class="flex flex-col" v-if="consulta && fieldSettings" :class="{ 'visible ': open, 'invisible ': !open }">
 
             <div
@@ -118,10 +99,7 @@
         </div>
 
         <div class="flex justify-between mt-3 my-1 ">
-            <button @click="showModalNuevaLista = true"
-                class="px-2 pb-1 h-7 rounded-md bg-blue-500 text-white hover:bg-blue-600 justify-self-end">
-                Agregar Lista
-            </button>
+            <div></div>
             <div class="flex space-x-1 items-center ">
                 <!-- Botón para abrir la modal agregar lista-->
 
@@ -440,7 +418,6 @@ export default {
         let lisPreIds = ref<NombreXid[]>([]);
         const showModalProveedores = ref(false)
         const showModalArticulos = ref(false)
-        const showModalNuevaLista = ref(false)
         const newPreLisIdName = ref('');
         const selectedId = ref<number | null>(null);
         const { $auth } = useNuxtApp();
@@ -448,42 +425,19 @@ export default {
         const appUrl = config.public.appUrl
         const apiUrl = config.public.apiUrl
 
-        const addPreLisId = async () => {
-            const apiUrl = '${apiUrl}/lis_pre_ids'; // URL de tu API
-            const data = {
-                nombre: newPreLisIdName.value, // Datos que se enviarán
-            };
 
+        const fetchLisPreIds = async () => {
             try {
-                const response = await $auth.fetchWithAuth(apiUrl, {
-                    method: 'POST', // Método HTTP POST
-                    headers: {
-                        'Content-Type': 'application/json', // Tipo de contenido
-                        // 'Authorization': 'Bearer tu_token' // Autenticación, si es necesario
-                    },
-                    body: JSON.stringify(data), // Cuerpo de la solicitud
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Error: ${response.statusText}`);
+                const responseLisPreIds = await $auth.fetchWithAuth(`${apiUrl}/lis_pre_ids`);
+                console.log('responseLisPreIds: ', responseLisPreIds.url);
+                if (responseLisPreIds.ok) {
+                    lisPreIds.value = await responseLisPreIds.json();
+                    console.log('lisPreIds: ', lisPreIds.value);
+                } else {
+                    console.error('HTTP-Error: ' + responseLisPreIds.status);
                 }
-
-                const responseData = await response.json();
-                console.log(responseData); // Manejo de la respuesta de la API
-                showModalNuevaLista.value = false; // Cierra la modal
-                newPreLisIdName.value = ''; // Limpia el campo de entrada
-
-                // Recargar la lista de IDs
-                // const responseLisPreIds = await $auth.fetchWithAuth('${apiUrl}/lis_pre_ids');
-                // if (responseLisPreIds.ok) {
-                //     lisPreIds.value = await responseLisPreIds.json();
-                //     console.log('lisPreIds: ', lisPreIds.value);
-                // } else {
-                //     console.error('HTTP-Error: ' + responseLisPreIds.status);
-                // }
             } catch (error) {
-                console.error('Error al agregar preLisId:', error);
-                // Manejo de errores
+                console.error('Fetch error: ', error);
             }
         };
 
@@ -543,14 +497,8 @@ export default {
 
         onMounted(async () => {
             // Cargar la consulta
-            refreshData();
-            const responseLisPreIds = await $auth.fetchWithAuth('${apiUrl}/lis_pre_ids');
-            if (responseLisPreIds.ok) {
-                lisPreIds.value = await responseLisPreIds.json();
-                console.log('lisPreIds: ', lisPreIds.value);
-            } else {
-                console.error('HTTP-Error: ' + responseLisPreIds.status);
-            }
+            await refreshData();
+            await fetchLisPreIds();
         });
 
         //seleccionar una fila
@@ -769,9 +717,7 @@ export default {
             saveChanges,
             deleteRows,
             tableProp,
-            showModalNuevaLista,
             newPreLisIdName,
-            addPreLisId,
             showModalProveedores,
             showModalArticulos,
             updateRow,

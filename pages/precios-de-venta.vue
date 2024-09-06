@@ -2,7 +2,7 @@
     <main class="mt-10 p-12">
 
         <h1>PRECIOS DE VENTA</h1>
-        <GrillaAllLisPreV2 :rutaGet="`${apiUrl}/lis_pre`" />
+        <GrillaAllLisPreV3 :rutaGet="`${apiUrl}/lis_pre`" />
     </main>
 </template>
 

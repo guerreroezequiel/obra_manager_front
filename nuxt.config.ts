@@ -16,4 +16,6 @@ export default defineNuxtConfig({
       apiUrl: process.env.API_URL,
     }
   },
+
+  compatibilityDate: '2024-09-05',
 })

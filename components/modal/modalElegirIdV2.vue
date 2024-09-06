@@ -224,13 +224,13 @@ export default {
         });
 
         const refreshData = async () => {
-            console.log('rutaGet: ', props.rutaGet)
+            // console.log('rutaGet: ', props.rutaGet)
             const response = await $auth.fetchWithAuth(props.rutaGet);
             if (response.ok) {
                 const contentType = response.headers.get("content-type");
                 const camposResponse = await $auth.fetchWithAuth(`${apiUrl}/user_field_settings/table/${tableProp}`);  // campos editables
                 if (camposResponse.ok) {
-                    console.log('camposResponse: ', camposResponse);
+                    // console.log('camposResponse: ', camposResponse);
                     const campos = await camposResponse.json();
                     fieldSettings.value = campos.map((campo: Campo) => ({
                         id: campo.id,
@@ -244,7 +244,7 @@ export default {
                         isEditable: campo.isEditable,
                         isHidden: campo.isHidden
                     }));
-                    console.log('okey'); // Mostrar fieldSettings y sus campos
+                    console.log('fieldsetting OK'); // Mostrar fieldSettings y sus campos
                 } else {
                     console.error('HTTP-Error desde GRILLA: ' + camposResponse.status);
                 }
@@ -254,7 +254,7 @@ export default {
                         ...item,
                         habilitado: item.habilitado == 1 ? true : false,
                     }));
-                    console.log('consulta: ', consulta.value);
+                    // console.log('consulta: ', consulta.value);
                 } else {
                     console.error('HTTP-Error desde GRILLA: La respuesta no es un JSON válido');
                 }

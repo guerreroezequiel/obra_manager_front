@@ -1,38 +1,29 @@
 <template>
-    <div class="flex flex-col p-2 rounded-lg">
-        <div class="flex flex-col p-2 rounded-lg">
-            <!-- Modal agregar lista-->
-            <div v-if="showModalNuevaLista"
-                class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-                <div class="bg-white p-4 rounded-lg shadow-lg w-1/3">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg">Agregar nueva Lista de Precios</h2>
-                        <button @click="showModalNuevaLista = false" class="text-black">&times;</button>
-                    </div>
-                    <input type="text" v-model="newPreLisIdName" placeholder="Nombre"
-                        class="p-2 border rounded w-full mb-4">
-                    <button @click="addPreLisId"
-                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 w-full">
-                        Agregar
-                    </button>
-                </div>
-            </div>
-        </div>
-
+    <div class="flex flex-col p-2 rounded-lg bg-slate-200 shadow-md border border-gray-400">
         <div class="flex flex-col" v-if="consulta && fieldSettings" :class="{ 'visible ': open, 'invisible ': !open }">
 
             <div
                 class=" bg-slate-200 rounded-lg overflow-hidden overflow-x-auto w-full shadow-md border-2 border-slate-400">
                 <table class="table-auto">
+                    <Icon v-if="!isEditingColumns" name="mdi:arrow-expand-horizontal" @click="toggleEditColumns()"
+                        class="absolute right-[3.6rem] top-[7.7rem] bg-slate-200 rounded-full opacity-35 hover:opacity-100 transition-opacity duration-300 hover:cursor-pointer  text-blue-700"
+                        size="21">
+                    </Icon>
+                    <Icon v-else name="mdi:content-save-outline" @click="toggleEditColumns(), updateFieldSettings()"
+                        class=" absolute right-[3.6rem] top-[7.7rem] bg-slate-200 rounded-full transition-opacity duration-300 hover:cursor-pointer text-blue-600"
+                        size="22">
+                    </Icon>
+
                     <thead>
                         <tr class="">
+
                             <th v-if="isDeleting"></th> <!-- Cabecera adicional vacía -->
                             <th v-for="(field, index) in sortedFieldSettings" :key="field.id" class="">
                                 <div class="border-r-2  my-1 px-0.5 "
-                                    :class="{ 'resizable hover:border-blue-500': isEditing }"
+                                    :class="{ 'resizable hover:border-blue-500': isEditingColumns }"
                                     :style="{ width: field.width + 'px', minWidth: field.type === 'search' ? '80px' : 'auto' }"
                                     :data-field-name="field.fieldName" :data-index="index">
-                                    <p class="truncate p-1 select-none">{{ field.tag }} {{ field.width }}</p>
+                                    <p class="truncate p-1 select-none">{{ field.tag }}</p>
                                 </div>
                             </th>
                         </tr>
@@ -47,9 +38,8 @@
                             </td>
                             <td v-for="(field, index) in fieldSettings" :key="field.id">
                                 <div v-if="cellRefs" class="flex flex-grow " :ref="el => cellRefs[index] = el">
-                                    <div v-if="field.type === 'search'" class="flex flex-grow">
-                                        <input :readonly="!isEditing"
-                                            :value="nombres[`${field.fieldName}_${(item as any)[field.fieldName]}`]"
+                                    <div v-if="field.type === 'search'" class="flex flex-grow" @click="selectRow(item)">
+                                        <input :readonly="!isEditing" :value="(item as any)[field.fieldName]"
                                             :style="{ width: `50px` }"
                                             class="flex flex-grow focus:outline-none focus:border-blue-500 border px-2 py-1 rounded-md">
                                         <button @click="selectRow(item), openModal(field.fieldName)"
@@ -57,10 +47,13 @@
                                             class="bg-blue-200 px-2 rounded items-center justify-center">
                                             <Icon name="simple-line-icons:magnifier" class="pb-1"></Icon>
                                         </button>
-
-                                        <ModalElegirId :showModal="showModalArticulos" :rutaGet="`${apiUrl}/articulos`"
-                                            @close.native="showModalArticulos = false"
-                                            @aceptar="updateRow($event, 'articuloId')" />
+                                        <ModalElegirIdV2 :showModal="showModalProveedores"
+                                            :rutaGet="`${apiUrl}/proveedores`"
+                                            @close.native="showModalProveedores = false"
+                                            @aceptar="updateRow($event, 'proveedorNombre')" />
+                                        <ModalElegirIdV2 :showModal="showModalArticulos"
+                                            :rutaGet="`${apiUrl}/articulos`" @close.native="showModalArticulos = false"
+                                            @aceptar="updateRow($event, 'articuloNombre')" />
 
                                     </div>
                                     <select v-else-if="field.type === 'list'" class="flex flex-grow bg-white rounded"
@@ -115,10 +108,7 @@
         </div>
 
         <div class="flex justify-between mt-3 my-1 ">
-            <button @click="showModalNuevaLista = true"
-                class="px-2 pb-1 h-7 rounded-md bg-blue-500 text-white hover:bg-blue-600 justify-self-end">
-                Agregar Lista
-            </button>
+            <div></div>
             <div class="flex space-x-1 items-center ">
                 <!-- Botón para abrir la modal agregar lista-->
 
@@ -196,10 +186,10 @@ interface LisPre {
     id: number;
     listaId: number;
     articuloId: number;
-    proveedorId: number;
-    precioCompra: number;
+    articuloNombre: string;
+    proveedorId: number | null;
+    proveedorNombre: string | null;
     precioVenta: number;
-    markup: number;
     descripcion: string | null;
     habilitado: boolean | null;
 }
@@ -207,9 +197,7 @@ interface LisPre {
 import interact from 'interactjs';
 import { ref, onMounted, watch } from 'vue';
 import { format, parseISO } from 'date-fns';
-import { ar, ca } from 'date-fns/locale';
-import ModalElegirId from '../modal/ModalElegirId.vue';
-
+import { ar, se } from 'date-fns/locale';
 
 export default {
     data() {
@@ -218,7 +206,7 @@ export default {
             nombres: {} as Record<string, string>,
             showModalField: '' as string,
             currentPage: 1,
-            perPage: 18,
+            perPage: 15,
             // ...
         }
     },
@@ -230,10 +218,8 @@ export default {
         },
     },
 
-
     mounted() {
         let debounceTimer: NodeJS.Timeout | null = null;
-
         // Interact.js resizable y draggable
         interact('.resizable').resizable({
             edges: { left: false, right: true, bottom: false, top: false },
@@ -344,50 +330,22 @@ export default {
                 id: 0,
                 listaId: 1,
                 articuloId: 0,
-                proveedorId: 0,
-                precioCompra: 0,
+                proveedorId: null,
                 precioVenta: 0,
-                markup: 0,
                 descripcion: null,
                 habilitado: false,
+                articuloNombre: '',
+                proveedorNombre: null,
             };
             this.consulta.push(newRow);
         },
 
-        // Obtener el nombre de un campo por su ID
-        async fetchNombre(id: number, fieldName: string) {
-            const config = useRuntimeConfig()
-            const apiUrl = config.public.apiUrl
-            if (id === null) {
-                console.error('ID es null');
-                return;
-            }
-
-            let url;
-            switch (fieldName) {
-                case 'articuloId':
-                    url = `${apiUrl}/articulos/${id}`;
-                    break;
-                case 'proveedorId':
-                    url = `${apiUrl}/proveedores/${id}`;
-                    break;
-                // Agrega más casos según sea necesario
-                default:
-                    console.error('Nombre de campo no reconocido');
-                    return;
-            }
-
-            const response = await fetch(url);
-            const data = await response.json();
-            this.nombres[`${fieldName}_${id}`] = data.nombre; // Usar una combinación de fieldName e id como clave
-        },
-
         openModal(fieldName: string) {
             switch (fieldName) {
-                case 'proveedorId':
+                case 'proveedorNombre':
                     this.showModalProveedores = true;
                     break;
-                case 'articuloId':
+                case 'articuloNombre':
                     this.showModalArticulos = true;
                     break;
                 default:
@@ -396,43 +354,14 @@ export default {
         },
     },
 
-    // Cargar los nombres de los campos al inicio
-    created() {
-        for (let item of this.consulta) {
-            for (let field in item) {
-                if (field === 'articuloId' || field === 'proveedorId') {
-                    if (item[field] !== null) {
-                        this.fetchNombre(item[field] as number, field);
-                    }
-                }
-            }
-        }
-    },
-
-    // Actualizar los nombres de los campos al cambiar la consulta
-    watch: {
-        consulta: {
-            immediate: true,
-            handler(newValue) {
-                for (let item of newValue) {
-                    for (let field in item) {
-                        if (field === 'articuloId' || field === 'proveedorId') { // Añade más campos si es necesario
-                            this.fetchNombre(item[field], field);
-                        }
-                    }
-                }
-            }
-        }
-    },
-
     setup(props, { emit }) {
         let consulta = ref<LisPre[]>([]);
         let open = ref(true);
         let selected = ref<LisPre | null>(null); // Nueva variable para almacenar el objeto ArtTarea seleccionado
         let fieldSettings: Ref<Campo[]> = ref([]);
         let isEditing = ref(false);  // Nuevo estado
+        let isEditingColumns = ref(false);  // Nuevo estado
         let isDeleting = ref(false);  // Nuevo estado
-        let changedItems = ref<{ [key: string]: any }>({});
         let originalConsulta = ref([]);  // Nuevo estado
         let tableProp = new URL(props.rutaGet).pathname.split('/')[1]
         let tareaId = parseInt(new URL(props.rutaGet).pathname.split('/').pop() || '') || null;
@@ -440,7 +369,6 @@ export default {
         let lisPreIds = ref<NombreXid[]>([]);
         const showModalProveedores = ref(false)
         const showModalArticulos = ref(false)
-        const showModalNuevaLista = ref(false)
         const newPreLisIdName = ref('');
         const selectedId = ref<number | null>(null);
         const { $auth } = useNuxtApp();
@@ -448,45 +376,21 @@ export default {
         const appUrl = config.public.appUrl
         const apiUrl = config.public.apiUrl
 
-        const addPreLisId = async () => {
-            const apiUrl = '${apiUrl}/lis_pre_ids'; // URL de tu API
-            const data = {
-                nombre: newPreLisIdName.value, // Datos que se enviarán
-            };
-
+        // Fetch de los IDs de las listas de precios
+        const fetchLisPreIds = async () => {
             try {
-                const response = await $auth.fetchWithAuth(apiUrl, {
-                    method: 'POST', // Método HTTP POST
-                    headers: {
-                        'Content-Type': 'application/json', // Tipo de contenido
-                        // 'Authorization': 'Bearer tu_token' // Autenticación, si es necesario
-                    },
-                    body: JSON.stringify(data), // Cuerpo de la solicitud
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Error: ${response.statusText}`);
+                const responseLisPreIds = await $auth.fetchWithAuth(`${apiUrl}/lis_pre_ids`);
+                console.log('responseLisPreIds: ', responseLisPreIds.url);
+                if (responseLisPreIds.ok) {
+                    lisPreIds.value = await responseLisPreIds.json();
+                    console.log('lisPreIds: ', lisPreIds.value);
+                } else {
+                    console.error('HTTP-Error: ' + responseLisPreIds.status);
                 }
-
-                const responseData = await response.json();
-                console.log(responseData); // Manejo de la respuesta de la API
-                showModalNuevaLista.value = false; // Cierra la modal
-                newPreLisIdName.value = ''; // Limpia el campo de entrada
-
-                // Recargar la lista de IDs
-                // const responseLisPreIds = await $auth.fetchWithAuth('${apiUrl}/lis_pre_ids');
-                // if (responseLisPreIds.ok) {
-                //     lisPreIds.value = await responseLisPreIds.json();
-                //     console.log('lisPreIds: ', lisPreIds.value);
-                // } else {
-                //     console.error('HTTP-Error: ' + responseLisPreIds.status);
-                // }
             } catch (error) {
-                console.error('Error al agregar preLisId:', error);
-                // Manejo de errores
+                console.error('Fetch error: ', error);
             }
         };
-
 
         const formatDate = (dateString: string) => {
             const date = parseISO(dateString);
@@ -543,14 +447,8 @@ export default {
 
         onMounted(async () => {
             // Cargar la consulta
-            refreshData();
-            const responseLisPreIds = await $auth.fetchWithAuth('${apiUrl}/lis_pre_ids');
-            if (responseLisPreIds.ok) {
-                lisPreIds.value = await responseLisPreIds.json();
-                console.log('lisPreIds: ', lisPreIds.value);
-            } else {
-                console.error('HTTP-Error: ' + responseLisPreIds.status);
-            }
+            await refreshData();
+            await fetchLisPreIds();
         });
 
         //seleccionar una fila
@@ -608,13 +506,15 @@ export default {
         const updateRow = (newId: any, modalField: string) => {
             if (selected.value !== null && newId !== undefined) {
                 switch (modalField) {
-                    case 'articuloId':
+                    case 'articuloNombre':
                         console.log('selectedRowModal ID: ', selected.value.id);
                         selected.value.articuloId = newId.id;
+                        selected.value.articuloNombre = newId.nombre;
                         selected.value.descripcion = newId.descripcion;
                         break;
-                    case 'proveedorId':
+                    case 'proveedorNombre':
                         selected.value.proveedorId = newId.id;
+                        selected.value.proveedorNombre = newId.nombre;
                         break;
                     default:
                         console.error(`No se encontró un campo para el modalField: ${modalField}`);
@@ -632,6 +532,14 @@ export default {
             }
             isEditing.value = !isEditing.value;
             isDeleting.value = false;
+        };
+
+        const toggleEditColumns = async () => {
+            if (!isEditingColumns.value) {
+                console.log('isEditingColumns.value: ', isEditingColumns.value);
+            }
+            isEditingColumns.value = !isEditingColumns.value;
+
         };
 
         const toggleDelete = async () => {
@@ -748,7 +656,7 @@ export default {
                 delete itemsToUpdate[prop];
             }
 
-            await updateFieldSettings();
+            // await updateFieldSettings();
 
             originalConsulta.value = [];
 
@@ -762,16 +670,16 @@ export default {
             open,
             fieldSettings,
             toggleEdit,
+            toggleEditColumns,
             toggleDelete,
             cancelChanges,
             isEditing,
+            isEditingColumns,
             isDeleting,
             saveChanges,
             deleteRows,
             tableProp,
-            showModalNuevaLista,
             newPreLisIdName,
-            addPreLisId,
             showModalProveedores,
             showModalArticulos,
             updateRow,
@@ -779,7 +687,7 @@ export default {
             deleteRowVisual,
             selected,
             apiUrl,
-            appUrl,
+            updateFieldSettings,
         };
     }
 };
